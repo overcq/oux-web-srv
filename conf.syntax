@@ -1,0 +1,75 @@
+koniec linii
+    "\n"
+odstęp zwykły
+	" "
+odstęp tabulacji
+	"\t"
+odstęp
+    odstęp zwykły | odstęp tabulacji | koniec linii
+odstępy linii
+    odstęp zwykły | odstęp tabulacji
+odstępy
+    odstęp ...
+
+path entity
+    @ text
+path
+    "/", path entity
+path quoted
+    "\"", path, "\""
+
+root path name
+    "root_path"
+root path
+    path | path quoted
+ip name
+    "ip"
+ip
+    @ text
+port name
+    "port"
+port
+    @ digit ...
+ssl name
+    "ssl"
+certificate name
+    "certificate_path"
+certificate
+    path | path quoted
+private key name
+    "private_key_path"
+private key
+    path | path quoted
+
+linia root path
+    root path name, odstępy linii, root path
+linia ip
+    ip name, odstępy linii, ip
+linia port
+    port name, odstępy linii, port
+linia ssl
+    ssl name
+linia certificate
+    certificate name, odstępy linii, certificate
+linia private key
+    private key name, odstępy linii, private key
+
+linia
+    linia root path | linia ip | linia port | linia ssl | linia certificate | linia private key
+linie
+/ odstępy
+    linia ...
+
+virtual host name
+    "virtualhost"
+virtual host
+/ odstępy
+    virtual host name
+    "{"
+    linie
+    "}"
+virtual hosts
+/ odstępy
+    virtual host ...
+body
+    virtual hosts

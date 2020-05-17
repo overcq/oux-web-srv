@@ -273,7 +273,7 @@ E_srv_Q_reply_I_s0_add_header( Pc *headers
     if( !E_srv_Q_reply_I_s0_add_header_1( headers, headers_l, s ))
         return 0;
     if( !E_srv_Q_reply_I_add_header_2( headers, headers_l ))
-    {   E_mem_Q_blk_I_rem( headers, headers_l_, *headers_l - headers_l_ );
+    {   E_mem_Q_blk_I_remove( headers, headers_l_, *headers_l - headers_l_ );
         *headers_l = headers_l_;
         return 0;
     }
@@ -288,7 +288,7 @@ E_srv_Q_reply_I_s_add_header( Pc *headers
     if( !E_srv_Q_reply_I_s_add_header_1( headers, headers_l, s, s_end ))
         return 0;
     if( !E_srv_Q_reply_I_add_header_2( headers, headers_l ))
-    {   E_mem_Q_blk_I_rem( headers, headers_l_, *headers_l - headers_l_ );
+    {   E_mem_Q_blk_I_remove( headers, headers_l_, *headers_l - headers_l_ );
         *headers_l = headers_l_;
         return 0;
     }
@@ -366,20 +366,20 @@ End_5:      ;
             if( E_srv_S_srv[j].ssl )
             {   E_srv_S_accept[ E_srv_S_accept_n - 1 ].ssl = SSL_new( E_srv_S_ssl_ctx );
                 if( !E_srv_S_accept[ E_srv_S_accept_n - 1 ].ssl )
-                {   E_mem_Q_blk_I_rem( &E_srv_S_accept, --E_srv_S_accept_n, 1 );
+                {   E_mem_Q_blk_I_remove( &E_srv_S_accept, --E_srv_S_accept_n, 1 );
                     V0( close( listen_sock )){}
                     continue;
                 }
                 if( SSL_set_fd( E_srv_S_accept[ E_srv_S_accept_n - 1 ].ssl, listen_sock ) != 1 )
                 {   SSL_free( E_srv_S_accept[ E_srv_S_accept_n - 1 ].ssl );
-                    E_mem_Q_blk_I_rem( &E_srv_S_accept, --E_srv_S_accept_n, 1 );
+                    E_mem_Q_blk_I_remove( &E_srv_S_accept, --E_srv_S_accept_n, 1 );
                     V0( close( listen_sock )){}
                     continue;
                 }
                 int e = SSL_accept( E_srv_S_accept[ E_srv_S_accept_n - 1 ].ssl );
                 if( !e )
                 {   SSL_free( E_srv_S_accept[ E_srv_S_accept_n - 1 ].ssl );
-                    E_mem_Q_blk_I_rem( &E_srv_S_accept, --E_srv_S_accept_n, 1 );
+                    E_mem_Q_blk_I_remove( &E_srv_S_accept, --E_srv_S_accept_n, 1 );
                     V0( close( listen_sock )){}
                     continue;
                 }
@@ -390,7 +390,7 @@ End_5:      ;
                     )
                         SSL_shutdown( E_srv_S_accept[ E_srv_S_accept_n - 1 ].ssl );
                     SSL_free( E_srv_S_accept[ E_srv_S_accept_n - 1 ].ssl );
-                    E_mem_Q_blk_I_rem( &E_srv_S_accept, --E_srv_S_accept_n, 1 );
+                    E_mem_Q_blk_I_remove( &E_srv_S_accept, --E_srv_S_accept_n, 1 );
                     V0( close( listen_sock )){}
                     continue;
                 }
@@ -411,7 +411,7 @@ End_5:      ;
                 {   SSL_shutdown( E_srv_S_accept[ E_srv_S_accept_n - 1 ].ssl );
                     SSL_free( E_srv_S_accept[ E_srv_S_accept_n - 1 ].ssl );
                 }
-                E_mem_Q_blk_I_rem( &E_srv_S_accept, --E_srv_S_accept_n, 1 );
+                E_mem_Q_blk_I_remove( &E_srv_S_accept, --E_srv_S_accept_n, 1 );
                 V0( close( listen_sock )){}
                 continue;
             }
@@ -543,7 +543,7 @@ Next_1:             FD_ZERO( &readfds );
                     {   E_reply_I_code( E_srv_S_accept[i].ssl, E_srv_S_accept[i].listen_sock, 400, yes, http_1 );
                         goto End_1;
                     }
-                    if( !E_mem_Q_blk_I_rem( &E_srv_S_accept[i].buf, s + 1 - E_srv_S_accept[i].buf, 2 ))
+                    if( !E_mem_Q_blk_I_remove( &E_srv_S_accept[i].buf, s + 1 - E_srv_S_accept[i].buf, 2 ))
                     {   E_reply_I_code( E_srv_S_accept[i].ssl, E_srv_S_accept[i].listen_sock, 500, yes, http_1 );
                         goto End_1;
                     }
@@ -604,7 +604,7 @@ End:            ;
                             for_n( k, path_n )
                                 s_2 = E_text_Z_s_R_c_search( s_2 + 1, path_end, '/' );
                             N s_2_i = s_2 - path;
-                            if( !E_mem_Q_blk_I_rem( &path, s_2 + 1 - path, path_end - ( s_2 + 1 )))
+                            if( !E_mem_Q_blk_I_remove( &path, s_2 + 1 - path, path_end - ( s_2 + 1 )))
                             {   W(path);
                                 E_reply_I_code( E_srv_S_accept[i].ssl, E_srv_S_accept[i].listen_sock, 500, yes, http_1 );
                                 goto End_1;
@@ -650,7 +650,7 @@ End:            ;
                     path_end = E_text_Z_s_P_s0_copy( path_end, S_php_index_file );
                     *path_end = '\0';
                     V0( access( path, F_OK ))
-                    {   if( !E_mem_Q_blk_I_rem( &path, path_end_i, E_text_Z_s0_R_l( S_php_index_file )))
+                    {   if( !E_mem_Q_blk_I_remove( &path, path_end_i, E_text_Z_s0_R_l( S_php_index_file )))
                         {   W(path);
                             E_reply_I_code( E_srv_S_accept[i].ssl, E_srv_S_accept[i].listen_sock, 500, yes, http_1 );
                             goto End_1;
@@ -1389,7 +1389,7 @@ End_1:      if( E_srv_S_accept[i].ssl )
             W( E_srv_S_accept[i].buf_2 );
             W( E_srv_S_accept[i].buf );
             V0( close( E_srv_S_accept[i].listen_sock )){}
-            if( !E_mem_Q_blk_I_rem( &E_srv_S_accept, i, 1 ))
+            if( !E_mem_Q_blk_I_remove( &E_srv_S_accept, i, 1 ))
             {   E_srv_W();
                 V();
             }

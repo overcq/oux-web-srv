@@ -15,7 +15,7 @@ Pc E_main_S_conf_file[] =
 N
 E_main_I_read_conf( void
 ){  for_n( file_i, sizeof( E_main_S_conf_file ) / sizeof( E_main_S_conf_file[0] ))
-    {   I conf_file = E_mem_Q_file_M( E_main_S_conf_file[ file_i ] );
+    {   I conf_file = E_mem_Q_file_M( E_main_S_conf_file[ file_i ], yes );
         if( !~conf_file )
             continue;
         if( E_conf_I_read( conf_file ))
