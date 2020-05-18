@@ -40,6 +40,8 @@ private key name
     "private_key_path"
 private key
     path | path quoted
+ssl value
+    "on" | "off"
 
 linia root path
     root path name, odstępy linii, root path
@@ -73,3 +75,5 @@ virtual hosts
     virtual host ...
 body
     virtual hosts
+    odstępy ?
+    @eof

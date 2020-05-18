@@ -68,7 +68,8 @@ N
 entities_func( struct E_text_syntax_Z_body *syntax
 , struct E_text_syntax_Z_state *state
 , N state_n
-){  if( state[ state_n - 1 ].entities_i == entities_virtualhost )
+){  //G_(); Gs0( syntax->entities[ state[ state_n - 1 ].entities_i ].name ); Gs0( state[ state_n - 1 ].s );
+    if( state[ state_n - 1 ].entities_i == entities_virtualhost )
     {   if( !E_mem_Q_blk_I_append( &E_conf_S_virtualhost, 1 ))
             return ~0;
         _0_( &E_conf_S_virtualhost[ E_conf_S_virtualhost_n ] );
@@ -155,6 +156,15 @@ E_conf_I_read( I conf_file
     entities_ssl = E_text_syntax_R_entity_by_name( syntax, "ssl name" );
     entities_certificate = E_text_syntax_R_entity_by_name( syntax, "certificate" );
     entities_private_key = E_text_syntax_R_entity_by_name( syntax, "private key" );
+    if( !~entities_virtualhost
+    || !~entities_root_path
+    || !~entities_ip
+    || !~entities_port
+    || !~entities_ssl
+    || !~entities_certificate
+    || !~entities_private_key
+    )
+        return ~0;
     O{  N ret = E_text_syntax_Q_state_I_parse_next( conf_file, syntax, &state, &state_n, entities_func );
         if( !~ret )
             goto End;
@@ -163,17 +173,17 @@ E_conf_I_read( I conf_file
     }
     E_text_syntax_Q_state_W( state, state_n );
     E_text_syntax_W(syntax);
-    G_(); Gd( E_conf_S_virtualhost_n );
     for_n( i, E_conf_S_virtualhost_n )
-    {   G_(); Gd(i);
-        G_(); Gs0( E_conf_S_virtualhost[i].root_path );
-        G_(); Gs0( E_conf_S_virtualhost[i].ip );
-        G_(); Gd( E_conf_S_virtualhost[i].port );
+    {   if( !E_conf_S_virtualhost[i].root_path
+        || !E_conf_S_virtualhost[i].ip
+        || !E_conf_S_virtualhost[i].port
+        )
+            return ~0;
         if( E_conf_S_virtualhost[i].ssl )
-        {   G_(); Gd( E_conf_S_virtualhost[i].ssl );
-            G_(); Gs0( E_conf_S_virtualhost[i].certificate_path );
-            G_(); Gs0( E_conf_S_virtualhost[i].private_key_path );
-        }
+            if( !E_conf_S_virtualhost[i].certificate_path
+            || !E_conf_S_virtualhost[i].private_key_path
+            )
+                return ~0;
     }
     return 0;
 End:E_text_syntax_Q_state_W( state, state_n );

@@ -87,11 +87,12 @@ E_srv_M( void
         };
         struct addrinfo *ai;
         N l = E_text_Z_n_N_s_G( E_conf_S_virtualhost[i].port, sizeof( E_conf_S_virtualhost[i].port ), 10 );
-        C port[l];
+        C port[ l + 1 ];
         E_text_Z_n_N_s( &port[0] + l, E_conf_S_virtualhost[i].port, sizeof( E_conf_S_virtualhost[i].port ), 10 );
         port[l] = '\0';
         V0( getaddrinfo( E_conf_S_virtualhost[i].ip, &port[0], &ai_hints, &ai ))
-        {   E_srv_W();
+        {   G_();
+            E_srv_W();
             return ~0;
         }
         if( !E_mem_Q_blk_I_append( &E_srv_S_srv, 1 ))
