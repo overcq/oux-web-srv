@@ -13,18 +13,18 @@
 #define S_request_buffer_l      4096
 #define S_read_buffer_l         ( 64 * 1024 )
 #define S_keepalive_timeout     5
-#define S_system_idle_time      0
+#define S_system_idle_time      50
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #ifndef __gnu_linux__
 extern char **environ;
     #endif
     #ifdef __gnu_linux__
 int E_srv_S_epoll_fd;
-struct epoll_event *E_srv_S_ee_ready = 0;
-N E_srv_S_ee_ready_n = 0;
+struct epoll_event *E_srv_S_ee_ready;
+N E_srv_S_ee_ready_n;
     #else
-struct pollfd *E_srv_S_poll_fd = 0;
-N E_srv_S_poll_fd_n = 0;
+struct pollfd *E_srv_S_poll_fd;
+N E_srv_S_poll_fd_n;
     #endif
 int E_srv_S_ssl_ret;
 struct E_srv_Z_srv
@@ -34,7 +34,7 @@ struct E_srv_Z_srv
   int *sfd;
   N sfd_n;
 } *E_srv_S_srv;
-N E_srv_S_srv_n = 0;
+N E_srv_S_srv_n;
 struct E_srv_Z_accept
 { int poll_fd;
   int listen_sock;
@@ -49,8 +49,8 @@ struct E_srv_Z_accept
   B stream;
   pid_t child;
 } *E_srv_S_accept;
-N E_srv_S_accept_n = 0;
-int E_srv_S_poll_pipe[2] = { -1, -1 };
+N E_srv_S_accept_n;
+int E_srv_S_poll_pipe[2];
 int E_srv_S_subprocess_pipe[2];
 struct E_srv_Z_s
 { Pc start, end;
@@ -61,8 +61,10 @@ struct E_srv_Z_inheaders
 //==============================================================================
 N
 E_srv_M( void
-){
+){  E_srv_S_poll_pipe[0] = -1;
+    E_srv_S_srv_n = 0;
         #ifdef __gnu_linux__
+    E_srv_S_ee_ready = 0;
     V1( E_srv_S_epoll_fd = epoll_create1(0) )
     {   E_srv_W();
         return ~0;
@@ -85,7 +87,6 @@ E_srv_M( void
         E_srv_S_srv[ E_srv_S_srv_n - 1 ].sfd = 0;
         E_srv_S_srv[ E_srv_S_srv_n - 1 ].sfd_n = 0;
         E_srv_S_srv[ E_srv_S_srv_n - 1 ].canonical = 0;
-        G_();
         if( E_conf_S_bind[i].ssl )
         {   E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx = SSL_CTX_new( TLS_server_method() );
             if( !E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx
@@ -97,7 +98,6 @@ E_srv_M( void
                 return ~0;
             }
         }
-        G_();
         struct addrinfo ai_hints =
         { .ai_flags = AI_CANONNAME | AI_NUMERICSERV
         , .ai_family = 0
@@ -168,6 +168,7 @@ E_srv_M( void
         return ~0;
     }
         #ifdef __gnu_linux__
+    E_srv_S_ee_ready_n = 0;
     struct epoll_event ee;
     ee.events = EPOLLIN;
     for_n( j, E_srv_S_srv_n )
@@ -216,11 +217,16 @@ E_srv_M( void
     E_srv_S_poll_fd[ E_srv_S_poll_fd_n ].events = POLLIN;
     E_srv_S_poll_fd_n++;
         #endif
+    E_srv_S_accept_n = 0;
     return 0;
 }
 void
 E_srv_W( void
 ){
+    if( E_srv_S_poll_pipe[0] != -1 )
+    {   V0( close( E_srv_S_poll_pipe[0] )){}
+        V0( close( E_srv_S_poll_pipe[1] )){}
+    }
         #ifdef __gnu_linux__
     if( E_srv_S_ee_ready )
         W( E_srv_S_ee_ready );
@@ -466,7 +472,7 @@ Next:               FD_ZERO( &readfds );
                     if( !E_srv_S_accept[i].buf_l )
                         goto End_1;
                     G_(); Gd(i); Gs0_( "odczytano nagłówek" ); Gd( E_srv_S_accept[i].buf_l );
-                    G_(); Gd(i); Gsl( E_srv_S_accept[i].buf, E_srv_S_accept[i].buf_l );
+                    //G_(); Gd(i); Gsl( E_srv_S_accept[i].buf, E_srv_S_accept[i].buf_l );
                 }else
                 {   fd_set readfds;
 Next_1:             FD_ZERO( &readfds );
@@ -492,7 +498,7 @@ Next_1:             FD_ZERO( &readfds );
                             }
                         }
                         G_(); Gd(i); Gs0_( "doczytano nagłówek" ); Gd(l);
-                        G_(); Gd(i); Gsl( E_srv_S_accept[i].buf + E_srv_S_accept[i].buf_l, l );
+                        //G_(); Gd(i); Gsl( E_srv_S_accept[i].buf + E_srv_S_accept[i].buf_l, l );
                         E_srv_S_accept[i].buf_l += l;
                     }
                 }
@@ -1321,7 +1327,7 @@ End:            ;
                 {   W(headers);
                     goto End_2;
                 }
-                G_(); Gd(i); Gsl( headers, headers_l - 4 );
+                //G_(); Gd(i); Gsl( headers, headers_l - 4 );
                 if( !~E_reply_I_data( E_srv_S_accept[i].ssl, E_srv_S_accept[i].listen_sock, headers, headers_l ))
                 {   W(headers);
                     goto End_2;

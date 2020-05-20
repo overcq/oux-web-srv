@@ -60,8 +60,6 @@ main(
             break;
     }
     Dh_W( srv, srv, 0 );
-    V0( close( E_srv_S_poll_pipe[0] )){}
-    V0( close( E_srv_S_poll_pipe[1] )){}
     W( E_srv_S_accept );
     W( E_srv_S_srv );
     for_n( i, E_conf_S_bind_n )
