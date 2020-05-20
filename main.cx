@@ -32,10 +32,10 @@ main(
 , Pc *argv
 ){  E_base_M( argc, argv );
     X_M( main, loop );
-    Mt_( E_conf_S_virtualhost, 0 );
+    Mt_( E_conf_S_bind, 0 );
     Mt_( E_srv_S_srv, 0 );
     Mt_( E_srv_S_accept, 0 );
-    if( !E_conf_S_virtualhost
+    if( !E_conf_S_bind
     || !E_srv_S_srv
     || !E_srv_S_accept
     )
@@ -64,15 +64,18 @@ main(
     V0( close( E_srv_S_poll_pipe[1] )){}
     W( E_srv_S_accept );
     W( E_srv_S_srv );
-    for_n( i, E_conf_S_virtualhost_n )
-    {   W( E_conf_S_virtualhost[i].root_path );
-        W( E_conf_S_virtualhost[i].ip );
-        if( E_conf_S_virtualhost[i].ssl )
-        {   W( E_conf_S_virtualhost[i].certificate_path );
-            W( E_conf_S_virtualhost[i].private_key_path );
+    for_n( i, E_conf_S_bind_n )
+    {   W( E_conf_S_bind[i].ip );
+        if( E_conf_S_bind[i].ssl )
+        {   W( E_conf_S_bind[i].certificate_path );
+            W( E_conf_S_bind[i].private_key_path );
+        }
+        for_n( j, E_conf_S_bind[i].virtualhost_n )
+        {   W( E_conf_S_bind[i].virtualhost[j].root_path );
+            W( E_conf_S_bind[i].virtualhost[j].host );
         }
     }
-    W( E_conf_S_virtualhost );
+    W( E_conf_S_bind );
     X_W( main, loop );
     E_base_W();
     return 0;
