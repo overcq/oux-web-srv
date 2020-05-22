@@ -27,7 +27,11 @@ E_reply_I_data( SSL *ssl
 , N l
 ){  N l_;
     if(ssl)
+            #ifdef __gnu_linux__
         O{  if(( E_srv_S_ssl_ret = SSL_write_ex( ssl, s, l, &l_ )) != 1 )
+            #else
+        O{  if(( E_srv_S_ssl_ret = l_ = SSL_write( ssl, s, l )) <= 0 )
+            #endif
                 return ~0;
             if( !( l -= l_ ))
                 break;

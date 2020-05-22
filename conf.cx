@@ -191,11 +191,11 @@ E_conf_I_read( I conf_file
     || !~entities_host
     )
         return ~0;
-    O{  N ret = E_text_syntax_Q_state_I_parse_next( conf_file, syntax, &state, &state_n, entities_func );
-        if( !~ret )
-            goto End;
-        if( ret == E_mem_Q_file_S_eof )
-            break;
+    N ret = E_text_syntax_Q_state_I_parse( conf_file, syntax, &state, &state_n, entities_func );
+    if( !~ret )
+        goto End;
+    if( ret == E_mem_Q_file_S_eof )
+    {   G_(); Gh(ret);
     }
     E_text_syntax_Q_state_W( state, state_n );
     E_text_syntax_W(syntax);

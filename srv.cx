@@ -88,9 +88,16 @@ E_srv_M( void
         E_srv_S_srv[ E_srv_S_srv_n - 1 ].sfd_n = 0;
         E_srv_S_srv[ E_srv_S_srv_n - 1 ].canonical = 0;
         if( E_conf_S_bind[i].ssl )
-        {   E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx = SSL_CTX_new( TLS_server_method() );
+        {   
+                #ifdef __gnu_linux__
+            E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx = SSL_CTX_new( TLS_server_method() );
+                #else
+            E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx = SSL_CTX_new( TLSv1_server_method() );
+                #endif
             if( !E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx
+                #ifdef __gnu_linux__
             || SSL_CTX_set_min_proto_version( E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx, TLS1_VERSION ) != 1
+                #endif
             || SSL_CTX_use_certificate_file( E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx, E_conf_S_bind[i].certificate_path, SSL_FILETYPE_PEM ) != 1
             || SSL_CTX_use_PrivateKey_file( E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx, E_conf_S_bind[i].private_key_path, SSL_FILETYPE_PEM ) != 1
             )
@@ -461,7 +468,11 @@ Next:               FD_ZERO( &readfds );
                         goto End_1;
                     }
                     if( E_srv_S_accept[i].ssl )
+                        #ifdef __gnu_linux__
                     {   if(( E_srv_S_ssl_ret = SSL_read_ex( E_srv_S_accept[i].ssl, E_srv_S_accept[i].buf, S_request_buffer_l, &E_srv_S_accept[i].buf_l )) != 1 )
+                        #else
+                    {   if(( E_srv_S_ssl_ret = E_srv_S_accept[i].buf_l = SSL_read( E_srv_S_accept[i].ssl, E_srv_S_accept[i].buf, S_request_buffer_l )) <= 0 )
+                        #endif
                             goto End_1;
                     }else
                     {   VO1( E_srv_S_accept[i].buf_l = read( E_srv_S_accept[i].listen_sock, E_srv_S_accept[i].buf, S_request_buffer_l ))
@@ -489,7 +500,11 @@ Next_1:             FD_ZERO( &readfds );
                             E_mem_Q_blk_I_copy( E_srv_S_accept[i].buf, E_srv_S_accept[i].buf_, E_srv_S_accept[i].buf_l );
                         N l;
                         if( E_srv_S_accept[i].ssl )
+                            #ifdef __gnu_linux__
                         {   if(( E_srv_S_ssl_ret = SSL_read_ex( E_srv_S_accept[i].ssl, E_srv_S_accept[i].buf + E_srv_S_accept[i].buf_l, S_request_buffer_l - E_srv_S_accept[i].buf_l, &l )) != 1 )
+                            #else
+                        {   if(( E_srv_S_ssl_ret = l = SSL_read( E_srv_S_accept[i].ssl, E_srv_S_accept[i].buf + E_srv_S_accept[i].buf_l, S_request_buffer_l - E_srv_S_accept[i].buf_l )) <=0 )
+                            #endif
                                 goto End_1;
                         }else
                         {   VO1( l = read( E_srv_S_accept[i].listen_sock, E_srv_S_accept[i].buf + E_srv_S_accept[i].buf_l, S_request_buffer_l - E_srv_S_accept[i].buf_l ))
