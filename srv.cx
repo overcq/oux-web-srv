@@ -445,7 +445,7 @@ End_5:      ;
             tv.Z_clock_time_minor_field = 0;
             _timeradd( &E_srv_S_accept[ E_srv_S_accept_n - 1 ].keepalive_tv, &tv, &E_srv_S_accept[ E_srv_S_accept_n - 1 ].keepalive_tv );
             E_srv_S_accept[ E_srv_S_accept_n - 1 ].child = -1;
-            G_(); Gd(j); Gs0_( "połączenie przyjęte" );
+            G(); Gd(j); Gs0_( "połączenie przyjęte" );
         }
         for_n_( i, E_srv_S_accept_n )
         {   if( E_srv_S_accept[i].file == -1 )
@@ -482,8 +482,8 @@ Next:               FD_ZERO( &readfds );
                     }
                     if( !E_srv_S_accept[i].buf_l )
                         goto End_1;
-                    G_(); Gd(i); Gs0_( "odczytano nagłówek" ); Gd( E_srv_S_accept[i].buf_l );
-                    //G_(); Gd(i); Gsl( E_srv_S_accept[i].buf, E_srv_S_accept[i].buf_l );
+                    G(); Gd(i); Gs0_( "odczytano nagłówek" ); Gd( E_srv_S_accept[i].buf_l );
+                    //G(); Gd(i); Gsl( E_srv_S_accept[i].buf, E_srv_S_accept[i].buf_l );
                 }else
                 {   fd_set readfds;
 Next_1:             FD_ZERO( &readfds );
@@ -512,12 +512,12 @@ Next_1:             FD_ZERO( &readfds );
                                 goto End_1;
                             }
                         }
-                        G_(); Gd(i); Gs0_( "doczytano nagłówek" ); Gd(l);
-                        //G_(); Gd(i); Gsl( E_srv_S_accept[i].buf + E_srv_S_accept[i].buf_l, l );
+                        G(); Gd(i); Gs0_( "doczytano nagłówek" ); Gd(l);
+                        //G(); Gd(i); Gsl( E_srv_S_accept[i].buf + E_srv_S_accept[i].buf_l, l );
                         E_srv_S_accept[i].buf_l += l;
                     }
                 }
-                G_(); Gd(i); Gs0_( "parsowanie nagłówka" );
+                G(); Gd(i); Gs0_( "parsowanie nagłówka" );
                 Pc s = E_text_Z_s_R_c_search( E_srv_S_accept[i].buf, E_srv_S_accept[i].buf + E_srv_S_accept[i].buf_l, '\n' );
                 if( s == E_srv_S_accept[i].buf + E_srv_S_accept[i].buf_l
                 || s == E_srv_S_accept[i].buf
@@ -813,7 +813,7 @@ End:            ;
                         *path_end = '\0';
                     }
                 }
-                G_(); Gd(i); Gs0(path);
+                G(); Gd(i); Gs0(path);
                 /// Przesunięcie o dane wysłane w formularzu.
                 if(post)
                 {   if( post_l > S_request_buffer_l - ( body - E_srv_S_accept[i].buf ))
@@ -1314,7 +1314,7 @@ End:            ;
                     Pc s_1 = E_srv_S_accept[i].buf_2;
                     if( E_text_Z_s_T_s0_eq_case( E_srv_S_accept[i].buf_2, E_srv_S_accept[i].buf_2 + 8, "Status: " ))
                     {   s_1 = E_text_Z_s_R_s0_search( E_srv_S_accept[i].buf_2 + 8, E_srv_S_accept[i].buf_2 + l, "\r\n" );
-                        //G_(); Gd(i); Gs_l( E_srv_S_accept[i].buf_2, s_1 - E_srv_S_accept[i].buf_2 );
+                        //G(); Gd(i); Gs_l( E_srv_S_accept[i].buf_2, s_1 - E_srv_S_accept[i].buf_2 );
                         Pc s = E_text_Z_s_R_c_search( E_srv_S_accept[i].buf_2 + 8, s_1, ' ' );
                         status = E_text_Z_s_N_n( E_srv_S_accept[i].buf_2 + 8, s, &s, 10 );
                         s_1 += 2;
@@ -1342,7 +1342,7 @@ End:            ;
                 {   W(headers);
                     goto End_2;
                 }
-                //G_(); Gd(i); Gsl( headers, headers_l - 4 );
+                //G(); Gd(i); Gsl( headers, headers_l - 4 );
                 if( !~E_reply_I_data( E_srv_S_accept[i].ssl, E_srv_S_accept[i].listen_sock, headers, headers_l ))
                 {   W(headers);
                     goto End_2;
@@ -1374,7 +1374,7 @@ End:            ;
                         goto End_2;
                 }
                 E_srv_S_accept[i].l += l;
-                G_(); Gd(i); Gd(l);
+                G(); Gd(i); Gd(l);
                 if( !~E_reply_I_data( E_srv_S_accept[i].ssl, E_srv_S_accept[i].listen_sock, E_srv_S_accept[i].buf_2, l ))
                     goto End_2;
                 if( E_srv_S_accept[i].stream )
@@ -1401,7 +1401,7 @@ End_3:          if( E_srv_S_accept[i].child != -1 )
                 tv.tv_sec = S_keepalive_timeout;
                 tv.Z_clock_time_minor_field = 0;
                 _timeradd( &E_srv_S_accept[i].keepalive_tv, &tv, &E_srv_S_accept[i].keepalive_tv );
-                G_(); Gd(i); Gs0_( "koniec transmisji" );
+                G(); Gd(i); Gs0_( "koniec transmisji" );
             }
             continue;
 End_2:      ;
@@ -1425,7 +1425,7 @@ End_1:      if( E_srv_S_accept[i].ssl )
                 V();
             }
             E_srv_S_accept_n--;
-            G_(); Gd(i); Gs0_( "koniec połączenia" );
+            G(); Gd(i); Gs0_( "koniec połączenia" );
             i--;
         }
     }

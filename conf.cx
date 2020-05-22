@@ -31,7 +31,6 @@ struct E_conf_Z_bind
 } *E_conf_S_bind;
 N E_conf_S_bind_n = 0;
 //==============================================================================
-/*
 N
 E_conf_I_read_I_b( Pc s
 ){  if( E_text_Z_s0_T_s0_eq_case( s, "1" )
@@ -46,7 +45,6 @@ E_conf_I_read_I_b( Pc s
         return no;
     return ~0;
 }
-*/
 N
 E_conf_Z_s0_Z_path_P_normalize( Pc *s
 ){  Pc s_1 = *s, s_2;
@@ -68,12 +66,12 @@ E_conf_Z_s0_Z_path_P_normalize( Pc *s
     return 0;
 }
 //------------------------------------------------------------------------------
-N entities_bind, entities_ip, entities_port, entities_ssl, entities_certificate, entities_private_key, entities_virtualhost, entities_root_path, entities_host;
+N entities_bind, entities_ip, entities_port, entities_ssl, entities_ssl_value, entities_certificate, entities_private_key, entities_virtualhost, entities_root_path, entities_host;
 N
 entities_func( struct E_text_syntax_Z_body *syntax
 , struct E_text_syntax_Z_state *state
 , N state_n
-){  //G_(); Gs0( syntax->entities[ state[ state_n - 1 ].entities_i ].name ); Gs0( state[ state_n - 1 ].s );
+){  G_(); Gs0( syntax->entities[ state[ state_n - 1 ].entities_i ].name ); Gs0( state[ state_n - 1 ].s );
     if( state[ state_n - 1 ].entities_i == entities_bind )
     {   if( !E_mem_Q_blk_I_append( &E_conf_S_bind, 1 ))
             return ~0;
@@ -130,7 +128,9 @@ entities_func( struct E_text_syntax_Z_body *syntax
         E_conf_S_bind[ E_conf_S_bind_n - 1 ].port = port;
     }else if( state[ state_n - 1 ].entities_i == entities_ssl )
         E_conf_S_bind[ E_conf_S_bind_n - 1 ].ssl = yes;
-    else if( state[ state_n - 1 ].entities_i == entities_certificate )
+    else if( state[ state_n - 1 ].entities_i == entities_ssl_value )
+    {   E_conf_S_bind[ E_conf_S_bind_n - 1 ].ssl = E_conf_I_read_I_b( state[ state_n - 1 ].s );
+    }else if( state[ state_n - 1 ].entities_i == entities_certificate )
     {   if( E_conf_S_bind[ E_conf_S_bind_n - 1 ].certificate_path )
             return ~0;
         N l = E_text_Z_s0_R_0_l( state[ state_n - 1 ].s );
@@ -175,6 +175,7 @@ E_conf_I_read( I conf_file
     entities_ip = E_text_syntax_R_entity_by_name( syntax, "ip" );
     entities_port = E_text_syntax_R_entity_by_name( syntax, "port" );
     entities_ssl = E_text_syntax_R_entity_by_name( syntax, "ssl name" );
+    entities_ssl_value = E_text_syntax_R_entity_by_name( syntax, "ssl value" );
     entities_certificate = E_text_syntax_R_entity_by_name( syntax, "certificate" );
     entities_private_key = E_text_syntax_R_entity_by_name( syntax, "private key" );
     entities_virtualhost = E_text_syntax_R_entity_by_name( syntax, "virtual host name" );
@@ -194,32 +195,29 @@ E_conf_I_read( I conf_file
     N ret = E_text_syntax_Q_state_I_parse( conf_file, syntax, &state, &state_n, entities_func );
     if( !~ret )
         goto End;
-    if( ret == E_mem_Q_file_S_eof )
-    {   G_(); Gh(ret);
-    }
     E_text_syntax_Q_state_W( state, state_n );
     E_text_syntax_W(syntax);
-    //for_n( i, E_conf_S_bind_n )
-    //{   if( !E_conf_S_bind[i].ip
-        //|| !E_conf_S_bind[i].port
-        //)
-            //return ~0;
-        //G_(); Gs0( E_conf_S_bind[i].ip ); Gd( E_conf_S_bind[i].port );
-        //if( E_conf_S_bind[i].ssl )
-        //{   if( !E_conf_S_bind[i].certificate_path
-            //|| !E_conf_S_bind[i].private_key_path
-            //)
-                //return ~0;
-            //G_(); Gs0( E_conf_S_bind[i].certificate_path ); Gs0( E_conf_S_bind[i].private_key_path );
-        //}
-        //for_n( j, E_conf_S_bind[i].virtualhost_n )
-        //{   if( !E_conf_S_bind[i].virtualhost[j].root_path
-            //|| !E_conf_S_bind[i].virtualhost[j].host
-            //)
-                //return ~0;
-            //G_(); Gs0( E_conf_S_bind[i].virtualhost[j].root_path ); Gs0( E_conf_S_bind[i].virtualhost[j].host );
-        //}
-    //}
+    for_n( i, E_conf_S_bind_n )
+    {   if( !E_conf_S_bind[i].ip
+        || !E_conf_S_bind[i].port
+        )
+            return ~0;
+        G_(); Gs0( E_conf_S_bind[i].ip ); Gd( E_conf_S_bind[i].port );
+        if( E_conf_S_bind[i].ssl )
+        {   if( !E_conf_S_bind[i].certificate_path
+            || !E_conf_S_bind[i].private_key_path
+            )
+                return ~0;
+            G_(); Gs0( E_conf_S_bind[i].certificate_path ); Gs0( E_conf_S_bind[i].private_key_path );
+        }
+        for_n( j, E_conf_S_bind[i].virtualhost_n )
+        {   if( !E_conf_S_bind[i].virtualhost[j].root_path
+            || !E_conf_S_bind[i].virtualhost[j].host
+            )
+                return ~0;
+            G_(); Gs0( E_conf_S_bind[i].virtualhost[j].root_path ); Gs0( E_conf_S_bind[i].virtualhost[j].host );
+        }
+    }
     return 0;
 End:E_text_syntax_Q_state_W( state, state_n );
     E_text_syntax_W(syntax);
