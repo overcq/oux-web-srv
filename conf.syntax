@@ -46,7 +46,7 @@ linia port
     port name, odstępy linii, port
 linia ssl
 / odstępy linii
-    ssl name
+    ssl name, ssl value ?
 linia certificate
 / odstępy linii
     certificate name, certificate
