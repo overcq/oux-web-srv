@@ -53,9 +53,7 @@ main(
     }
     V0_( setgid( pw->pw_gid ));
     V0_( setuid( pw->pw_uid ));
-    I *M_(task);
-    *task = E_mem_Q_tab_R_n( E_base_S->E_flow_Q_task_S );
-    Dh_M( srv, srv, 0, task );
+    Dh_M( srv, srv, 0, 0 );
     O{  X_B( main, loop, 0 )
             break;
     }

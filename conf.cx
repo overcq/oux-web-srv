@@ -33,12 +33,12 @@ N E_conf_S_bind_n = 0;
 //==============================================================================
 N
 E_conf_I_read_I_b( Pc s
-){  if( E_text_Z_s0_T_s0_eq_case( s, "1" )
+){  if( E_text_Z_s0_T_s0_eq( s, "1" )
     || E_text_Z_s0_T_s0_eq_case( s, "on" )
     || E_text_Z_s0_T_s0_eq_case( s, "yes" )
     )
         return yes;
-    if( E_text_Z_s0_T_s0_eq_case( s, "0" )
+    if( E_text_Z_s0_T_s0_eq( s, "0" )
     || E_text_Z_s0_T_s0_eq_case( s, "off" )
     || E_text_Z_s0_T_s0_eq_case( s, "no" )
     )

@@ -99,7 +99,7 @@ path entity
 path quoted
     "\"/", path quoted entity, "\""
 path quoted entity
-    /[^\/"]+/
+    /[^"]+/
 
 odstępy
     odstęp ...
