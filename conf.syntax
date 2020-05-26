@@ -4,10 +4,10 @@ body
     @eof
 
 binds
-/ odstępy
+/ odstępy z komentarzami
     bind ...
 bind
-/ odstępy
+/ odstępy z komentarzami
     bind name
     "{"
     bind content lines
@@ -17,23 +17,23 @@ bind
 bind name
     "bind"
 bind content lines
-/ odstępy
+/ odstępy z komentarzami
     bind content line ...
 bind content line
     linia ip | linia port | linia ssl | linia certificate | linia private key
 
 virtual hosts
-/ odstępy
+/ odstępy z komentarzami
     virtual host ...
 virtual host
-/ odstępy
+/ odstępy z komentarzami
     virtual host name
     "{"
     virtual host lines
     "}"
 
 virtual host lines
-/ odstępy
+/ odstępy z komentarzami
     virtual host line ...
 virtual host line
     linia root path | linia host
@@ -101,6 +101,18 @@ path quoted
 path quoted entity
     /[^"]+/
 
+komentarze
+/ odstępy
+    komentarz ...
+komentarz
+    "//", /[^\n]+/
+
+odstępy z komentarzami
+    odstępy komentarze | komentarze odstępy
+odstępy komentarze
+    odstępy, komentarze ? ...
+komentarze odstępy
+    komentarze ?, odstępy ...
 odstępy
     odstęp ...
 odstępy linii

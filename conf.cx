@@ -196,6 +196,8 @@ E_conf_I_read( I conf_file
         goto End;
     E_text_syntax_Q_state_W( state, state_n );
     E_text_syntax_W(syntax);
+    if( !E_conf_S_bind_n )
+        return ~0;
     for_n( i, E_conf_S_bind_n )
     {   if( !E_conf_S_bind[i].ip
         || !E_conf_S_bind[i].port

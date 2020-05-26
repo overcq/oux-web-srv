@@ -11,9 +11,9 @@
 #define S_html_index_file       "index.html"
 #define S_listen_backlog        1024
 #define S_request_buffer_l      4096
-#define S_read_buffer_l         ( 64 * 1024 )
+#define S_read_buffer_l         ( 128 * 1024 )
 #define S_keepalive_timeout     5
-#define S_system_idle_time      50
+#define S_system_idle_time      100
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #ifndef __gnu_linux__
 extern char **environ;
