@@ -13,7 +13,7 @@
 #define S_request_buffer_l      4096
 #define S_read_buffer_l         ( 128 * 1024 )
 #define S_keepalive_timeout     5
-#define S_system_idle_time      100
+#define S_system_idle_time      0
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #ifndef __gnu_linux__
 extern char **environ;
@@ -890,7 +890,7 @@ End:            ;
                         }
                         s_1 = E_text_Z_s_P_s0_copy( s, "SERVER_PORT=" );
                         E_text_Z_n_N_s( s_1 + l_1, E_conf_S_bind[ E_srv_S_srv[j].bind_i ].port, sizeof( E_conf_S_bind[ E_srv_S_srv[j].bind_i ].port ), 10 );
-                        E_text_Z_s_P_s_copy_0( s_1, s_1, s_1 + l_1 );
+                        *( s_1 + l_1 ) = '\0';
                         environ[ environ_i++ ] = s;
                         l = E_text_Z_s0_R_l( "SERVER_NAME=" ) + E_text_Z_s0_R_l( E_srv_S_srv[j].canonical ) + 1;
                         s = M(l);

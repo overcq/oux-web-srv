@@ -108,10 +108,6 @@ komentarz
     "//", /[^\n]+/
 
 odstępy z komentarzami
-    odstępy komentarze | komentarze odstępy
-odstępy komentarze
-    odstępy, komentarze ? ...
-komentarze odstępy
     komentarze ?, odstępy ...
 odstępy
     odstęp ...
