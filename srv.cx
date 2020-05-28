@@ -1412,7 +1412,7 @@ End_2:      ;
 End_1:      if( E_srv_S_accept[i].ssl )
             {   int e = SSL_get_error( E_srv_S_accept[i].ssl, E_srv_S_ssl_ret );
                 if( e != SSL_ERROR_SYSCALL
-                || e != SSL_ERROR_SSL
+                && e != SSL_ERROR_SSL
                 )
                     SSL_shutdown( E_srv_S_accept[i].ssl );
                 SSL_free( E_srv_S_accept[i].ssl );
