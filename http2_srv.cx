@@ -1,0 +1,121 @@
+/*******************************************************************************
+*   ___   workplace
+*  ¦OUX¦  C+
+*  ¦/C+¦  server
+*   ---   web server
+*         HTTP/2 server
+* ©overcq                on ‟Gentoo Linux 17.1” “x86_64”             2020‒6‒20 b
+*******************************************************************************/
+enum E_http2_srv_Z_frame_type
+{ E_http2_srv_Z_frame_type_S_data
+, E_http2_srv_Z_frame_type_S_headers
+, E_http2_srv_Z_frame_type_S_priority
+, E_http2_srv_Z_frame_type_S_rst_stream
+, E_http2_srv_Z_frame_type_S_settings
+, E_http2_srv_Z_frame_type_S_push_promise
+, E_http2_srv_Z_frame_type_S_ping
+, E_http2_srv_Z_frame_type_S_goaway
+, E_http2_srv_Z_frame_type_S_window_update
+, E_http2_srv_Z_frame_type_S_continuation
+};
+enum E_http2_srv_Z_frame_flag
+{ E_http2_srv_Z_frame_type_data_Z_flag_S_end_stream = 1
+, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream = 1
+, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers = 4
+, E_http2_srv_Z_frame_type_headers_Z_flag_S_padded = 8
+, E_http2_srv_Z_frame_type_headers_Z_flag_S_priority = 0x20
+, E_http2_srv_Z_frame_type_settings_Z_flag_S_ack = 1
+, E_http2_srv_Z_frame_type_ping_Z_flag_S_ack = 1
+, E_http2_srv_Z_frame_type_continuation_Z_flag_S_end_headers = 4
+};
+enum E_http2_srv_Z_frame_type_setting
+{ E_http2_srv_Z_frame_type_setting_Z_header_table_size = 1
+, E_http2_srv_Z_frame_type_setting_Z_enable_push
+, E_http2_srv_Z_frame_type_setting_Z_max_concurrent_streams
+, E_http2_srv_Z_frame_type_setting_Z_initial_window_size
+, E_http2_srv_Z_frame_type_setting_Z_max_frame_size
+, E_http2_srv_Z_frame_type_setting_Z_max_header_list_size
+};
+//==============================================================================
+N
+E_http2_srv_I_read_n( Pc *buffer
+, N n
+){  N ret = 0;
+    for_n( i, n )
+    {   ret <<= 8;
+        ret |= **buffer & 0xff;
+        (*buffer)++;
+    }
+    return ret;
+}
+void
+E_http2_srv_I_read_s_l( Pc *buffer
+, Pc s
+, N l
+){  for_n( i, l )
+    {   *s = **buffer;
+        s++;
+        (*buffer)++;
+    }
+}
+void
+E_http2_srv_I_write_n( Pc *buffer
+, N v
+, N n
+){  for_n_rev( i, n )
+    {   **buffer = ( v >> ( 8 * i )) & 0xff;
+        (*buffer)++;
+    }
+}
+void
+E_http2_srv_I_write_s_l( Pc *buffer
+, Pc s
+, N l
+){  for_n( i, l )
+    {   **buffer = *s;
+        s++;
+        (*buffer)++;
+    }
+}
+void
+E_http2_srv_I_write_header( Pc *buffer
+, N frame_length
+, N8 frame_type
+, N8 frame_flags
+, N frame_stream
+){  E_http2_srv_I_write_n( buffer, frame_length, 3 );
+    E_http2_srv_I_write_n( buffer, frame_type, 1 );
+    E_http2_srv_I_write_n( buffer, frame_flags, 1 );
+    E_http2_srv_I_write_n( buffer, frame_stream & 0x7fffffff, 4 );
+}
+N
+E_http2_srv_I_reply_code( N frame_stream
+, Pc *buffer
+, N code
+, Pc **dynamic_table
+, N *dynamic_table_n
+){  G_(); Gd(code);
+    Pc *Mt_( headers, 1 );
+    if( !headers )
+        return ~0;
+    headers[0] = M(13);
+    if( !headers[0] )
+    {   W(headers);
+        return ~0;
+    }
+    Pc s = E_text_Z_s_P_s0_copy( headers[0], ":status: " );
+    E_text_Z_n_N_s( s + 3, code, sizeof(code), 10 );
+    *( s + 3 ) = '\0';
+    Pc buffer_ = *buffer + 9;
+    if( !~E_http2_header_I_write( &buffer_, headers, 1, dynamic_table, dynamic_table_n ))
+    {   W( headers[0] );
+        W(headers);
+        return ~0;
+    }
+    W( headers[0] );
+    W(headers);
+    E_http2_srv_I_write_header( buffer, buffer_ - 9 - *buffer, E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream | E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers, frame_stream );
+    *buffer = buffer_;
+    return 0;
+}
+/******************************************************************************/

@@ -35,9 +35,11 @@ main(
     Mt_( E_conf_S_bind, 0 );
     Mt_( E_srv_S_srv, 0 );
     Mt_( E_srv_S_accept, 0 );
+    Mt_( E_srv_S_http2_accept, 0 );
     if( !E_conf_S_bind
     || !E_srv_S_srv
     || !E_srv_S_accept
+    || !E_srv_S_http2_accept
     )
     {   G_(); Gs0_( "error: allocating memory" ); V();
     }
@@ -58,6 +60,7 @@ main(
             break;
     }
     Dh_W( srv, srv, 0 );
+    W( E_srv_S_http2_accept );
     W( E_srv_S_accept );
     W( E_srv_S_srv );
     for_n( i, E_conf_S_bind_n )
