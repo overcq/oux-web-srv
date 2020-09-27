@@ -75,12 +75,14 @@ struct E_srv_Z_http2_stream
   int file;
   off_t file_size;
   off_t l, first_l;
-  B stream;
+  B end_stream;
   pid_t child;
   Pc *headers;
   N headers_n;
   Pc buf_headers;
   N buf_headers_l;
+  Pc buf_post;
+  N buf_post_l;
 };
 struct E_srv_Z_http2_accept
 { int poll_fd;
@@ -437,6 +439,8 @@ D( srv, srv )
                     }
                     if( stream->buf_headers )
                         W( stream->buf_headers );
+                    if( stream->buf_post )
+                        W( stream->buf_post );
                 }
                 E_mem_Q_tab_W( E_srv_S_http2_accept[i].stream );
                 W( E_srv_S_http2_accept[i].buf_2 );
@@ -1621,9 +1625,7 @@ End_1:      if( E_srv_S_accept[i].ssl )
                 || stream->window_size <= 0
                 )
                     continue;
-                N send_frame_size_max = stream->window_size;
-                if( send_frame_size_max > E_srv_S_http2_accept[i].send_frame_size_max )
-                    send_frame_size_max = E_srv_S_http2_accept[i].send_frame_size_max;
+                N send_frame_size_max = J_min( stream->window_size, E_srv_S_http2_accept[i].send_frame_size_max );
                 N l = 0;
                 N l_;
                 O{  G_(); Gd( send_frame_size_max ); Gd(l); Gd( send_frame_size_max - l );
@@ -1638,7 +1640,7 @@ End_1:      if( E_srv_S_accept[i].ssl )
                     if( l == send_frame_size_max )
                         break;
                 }
-                G_(); Gd(l);
+                G_(); Gd(l); //Gsl( E_srv_S_http2_accept[i].buf_2 + 9, l );
                 E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
                 if( !l_ )
                 {   V0( close( stream->file )){}
@@ -1739,8 +1741,7 @@ End2:       if( E_srv_S_http2_accept[i].preface )
             }
             if( E_srv_S_http2_accept[i].buf_ == E_srv_S_http2_accept[i].buf + E_srv_S_http2_accept[i].buf_l )
                 goto Next2;
-            O{  G_();
-                if( E_srv_S_http2_accept[i].buf_ + 9 > E_srv_S_http2_accept[i].buf + E_srv_S_http2_accept[i].buf_l )
+            O{  if( E_srv_S_http2_accept[i].buf_ + 9 > E_srv_S_http2_accept[i].buf + E_srv_S_http2_accept[i].buf_l )
                     break;
                 N frame_length = E_http2_srv_I_read_n( &E_srv_S_http2_accept[i].buf_, 3 );
                 N frame_type = E_http2_srv_I_read_n( &E_srv_S_http2_accept[i].buf_, 1 );
@@ -1755,12 +1756,50 @@ End2:       if( E_srv_S_http2_accept[i].preface )
                 switch( frame_type )
                 { case E_http2_srv_Z_frame_type_S_data:
                     {   G_();
+                        S data_length = frame_length;
+                        N8 pad_length;
+                        if( frame_flags & E_http2_srv_Z_frame_type_data_Z_flag_S_padded )
+                        {   pad_length = E_http2_srv_I_read_n( &E_srv_S_http2_accept[i].buf_, 1 );
+                            data_length -= 1 + pad_length;
+                        }else
+                            pad_length = 0;
+                        if( data_length < 0 )
+                        {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_protocol_error;
+                            goto End2_2;
+                        }
+                        struct E_srv_Z_http2_stream *stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, frame_stream - 1 );
+                        if( stream->end_stream )
+                        {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_protocol_error;
+                            goto End2_2;
+                        }
+                        if( !stream->buf_post )
+                        {   stream->buf_post = M( data_length );
+                            if( !stream->buf_post )
+                            {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                goto End2_2;
+                            }
+                            stream->buf_post_l = data_length;
+                            E_mem_Q_blk_I_copy( stream->buf_post, E_srv_S_http2_accept[i].buf_, data_length );
+                            E_srv_S_http2_accept[i].buf_ += pad_length;
+                        }else
+                        {   Pc p = E_mem_Q_blk_I_append( &stream->buf_post, data_length );
+                            if( !p )
+                            {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                goto End2_2;
+                            }
+                            stream->buf_post_l += data_length;
+                            E_mem_Q_blk_I_copy( p, E_srv_S_http2_accept[i].buf_, data_length );
+                            E_srv_S_http2_accept[i].buf_ += data_length + pad_length;
+                        }
+                        if( frame_flags & E_http2_srv_Z_frame_type_data_Z_flag_S_end_stream )
+                            goto Http2_srv;
                         break;
                     }
                   case E_http2_srv_Z_frame_type_S_headers:
                     {   G_(); Gd( frame_stream );
                         if( !frame_stream
                         || frame_stream - 1 >= (I)~0
+                        || frame_stream > E_srv_S_http2_accept[i].concurrent_streams_max
                         || E_mem_Q_tab_T( E_srv_S_http2_accept[i].stream, frame_stream - 1 )
                         )
                         {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_protocol_error;
@@ -1773,6 +1812,7 @@ End2:       if( E_srv_S_http2_accept[i].preface )
                         struct E_srv_Z_http2_stream *stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, frame_stream - 1 );
                         stream->file = -1;
                         stream->buf_headers = 0;
+                        stream->buf_post = 0;
                         stream->window_size = E_srv_S_http2_accept[i].window_size;
                         Mt_( stream->headers, 0 );
                         if( !stream->headers )
@@ -1780,7 +1820,7 @@ End2:       if( E_srv_S_http2_accept[i].preface )
                             goto End2_2;
                         }
                         stream->headers_n = 0;
-                        N headers_length = frame_length;
+                        S headers_length = frame_length;
                         N8 pad_length;
                         if( frame_flags & E_http2_srv_Z_frame_type_headers_Z_flag_S_padded )
                         {   pad_length = E_http2_srv_I_read_n( &E_srv_S_http2_accept[i].buf_, 1 );
@@ -1794,7 +1834,7 @@ End2:       if( E_srv_S_http2_accept[i].preface )
                             weight = E_http2_srv_I_read_n( &E_srv_S_http2_accept[i].buf_, 1 );
                             headers_length -= 4 + 1;
                         }
-                        if( pad_length > headers_length )
+                        if( headers_length < 0 )
                         {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_protocol_error;
                             goto End2_2;
                         }
@@ -1806,7 +1846,8 @@ End2:       if( E_srv_S_http2_accept[i].preface )
                             }
                             stream->buf_headers_l = headers_length;
                             E_mem_Q_blk_I_copy( stream->buf_headers, E_srv_S_http2_accept[i].buf_, headers_length );
-                            E_srv_S_http2_accept[i].buf_ += pad_length;
+                            E_srv_S_http2_accept[i].buf_ += headers_length + pad_length;
+                            stream->end_stream = frame_flags & E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream;
                         }else
                         {   if( !~E_http2_header_I_read( &E_srv_S_http2_accept[i].buf_, headers_length, &stream->headers, &stream->headers_n, &E_srv_S_http2_accept[i].dynamic_table_dec, &E_srv_S_http2_accept[i].dynamic_table_dec_n ))
                             {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
@@ -1817,8 +1858,7 @@ End2:       if( E_srv_S_http2_accept[i].preface )
                             {   G_(); Gs0( stream->headers[ headers_i ] );
                             }
                             if( frame_flags & E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream )
-                            {   Pc body;
-                                N post_l = 0;
+                            {
 Http2_srv:                      ;
                                 if( stream->buf_headers )
                                     W_( stream->buf_headers );
@@ -2007,7 +2047,6 @@ Http2_srv:                      ;
                                 }
                                 G_(); Gd(i); Gs0(path);
                                 B php = E_text_Z_s0_T_s0_ends( path, ".php" );
-                                stream->stream = php;
                                 if(php)
                                 {   gz = no; /// Nie obsługuje kompresji strumienia PHP.
                                     V0( access( path, F_OK ))
@@ -2296,21 +2335,22 @@ Http2_srv:                      ;
                                             }
                                             E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "CONTENT_TYPE=" ), h );
                                             environ[ environ_i++ ] = s;
-                                            N l_1 = E_text_Z_n_N_s_G( post_l, sizeof( post_l ), 10 );
+                                            N l_1 = E_text_Z_n_N_s_G( stream->buf_post_l, sizeof( stream->buf_post_l ), 10 );
                                             l = E_text_Z_s0_R_l( "CONTENT_LENGTH=" ) + l_1 + 1;
                                             s = M(l);
                                             if( !s )
                                             {   G_(); V();
                                             }
                                             E_text_Z_s_P_s0_copy( s, "CONTENT_LENGTH=" );
-                                            E_text_Z_n_N_s( s + E_text_Z_s0_R_l( "CONTENT_LENGTH=" ) + l_1, post_l, sizeof( post_l ), 10 );
+                                            E_text_Z_n_N_s( s + E_text_Z_s0_R_l( "CONTENT_LENGTH=" ) + l_1, stream->buf_post_l, sizeof( stream->buf_post_l ), 10 );
                                             *( s + E_text_Z_s0_R_l( "CONTENT_LENGTH=" ) + l_1 ) = '\0';
                                             environ[ environ_i++ ] = s;
                                             int tmp_pipe[2];
                                             V0_( pipe( &tmp_pipe[0] ));
                                             VO1_( dup2( tmp_pipe[0], STDIN_FILENO ));
                                             V0_( close( tmp_pipe[0] ));
-                                            E_reply_I_data( 0, tmp_pipe[1], body, post_l );
+                                            //G_(); Gsl( stream->buf_post, stream->buf_post_l );
+                                            E_reply_I_data( 0, tmp_pipe[1], stream->buf_post, stream->buf_post_l );
                                             V0_( close( tmp_pipe[1] ));
                                         }else
                                         {   V0_( close( STDIN_FILENO ));
@@ -2325,6 +2365,8 @@ Http2_srv:                      ;
                                     stream->child = pid;
                                     W(args);
                                     V0( close( E_srv_S_subprocess_pipe[1] )){}
+                                    if( stream->buf_post )
+                                        W_( stream->buf_post );
                                     Pc buf = M( S_headers_buffer_l );
                                     if( !buf )
                                     {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
@@ -2474,16 +2516,20 @@ Http2_srv:                      ;
                                     for_n_( headers_i, headers_n )
                                         W( headers[ headers_i ] );
                                     W(headers);
-                                    E_http2_srv_I_write_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers | ( l - ( s_end + 4 - buf ) ? 0 : E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream ), frame_stream );
+                                    E_http2_srv_I_write_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers, frame_stream );
                                     if( l - ( s_end + 4 - buf ))
                                     {   if( l != S_headers_buffer_l )
                                         {   V0( close( stream->file )){}
                                             stream->file = -1;
+                                            //TODO Zabezpieczyć przed przepełnieniem bufora wysyłania.
                                             E_http2_srv_I_write_header( &E_srv_S_http2_accept[i].buf_2_, l - ( s_end + 4 - buf ), E_http2_srv_Z_frame_type_S_data, E_http2_srv_Z_frame_type_data_Z_flag_S_end_stream, frame_stream );
+                                            //G_(); Gsl( s_end + 4, l - ( s_end + 4 - buf ));
                                             E_mem_Q_blk_I_copy( E_srv_S_http2_accept[i].buf_2_, s_end + 4, l - ( s_end + 4 - buf ));
                                             E_srv_S_http2_accept[i].buf_2_ += l - ( s_end + 4 - buf );
                                         }else
-                                        {   E_http2_srv_I_write_header( &E_srv_S_http2_accept[i].buf_2_, l - ( s_end + 4 - buf ), E_http2_srv_Z_frame_type_S_data, 0, frame_stream );
+                                        {   //TODO Zabezpieczyć przed przepełnieniem bufora wysyłania.
+                                            E_http2_srv_I_write_header( &E_srv_S_http2_accept[i].buf_2_, l - ( s_end + 4 - buf ), E_http2_srv_Z_frame_type_S_data, 0, frame_stream );
+                                            //G_(); Gsl( s_end + 4, l - ( s_end + 4 - buf ));
                                             E_mem_Q_blk_I_copy( E_srv_S_http2_accept[i].buf_2_, s_end + 4, l - ( s_end + 4 - buf ));
                                             E_srv_S_http2_accept[i].buf_2_ += l - ( s_end + 4 - buf );
                                         }
@@ -2491,7 +2537,7 @@ Http2_srv:                      ;
                                     }
                                     W(buf);
                                 }else
-                                {   N headers_n = 4;
+                                {   N headers_n = 5;
                                     Pc *Mt_( headers, headers_n );
                                     if( !headers )
                                     {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
@@ -2597,6 +2643,20 @@ Http2_srv:                      ;
                                     E_text_Z_n_N_s( s + l, stat.st_size, sizeof( stat.st_size ), 10 );
                                     E_text_Z_s_P_s_copy_0( E_text_Z_s_P_s0_copy( headers[ headers_i ], "Content-Length: " ), s, s + l );
                                     W(s);
+                                    headers_i++;
+                                    Pc h = E_http2_header_R_header( stream->headers, stream->headers_n, "Cookie" );
+                                    if(h)
+                                    {   headers[ headers_i ] = M( 8 + E_text_Z_s0_R_l(h) + 1 );
+                                        if( !headers[ headers_i ] )
+                                        {   for_n( headers_i, headers_n )
+                                                W( headers[ headers_i ] );
+                                            W(headers);
+                                            E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                            goto End2_2;
+                                        }
+                                        E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( headers[ headers_i ], "Cookie: " ), h );
+                                    }else
+                                        headers_n--;
                                     for_n_( headers_i, headers_n )
                                     {   G_(); Gs0( headers[ headers_i ] );
                                     }
@@ -2615,8 +2675,8 @@ Http2_srv:                      ;
                                     E_http2_srv_I_write_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers, frame_stream );
                                 }
                                 W(path);
-                                
-                            }
+                            }else
+                                stream->end_stream = no;
                         }
                         break;
                     }
@@ -2684,6 +2744,8 @@ Http2_srv:                      ;
                                     }
                                     break;
                               case E_http2_srv_Z_frame_type_setting_Z_max_frame_size:
+                                    if( value == E_srv_S_http2_accept[i].send_frame_size_max )
+                                        break;
                                     if( value > E_srv_S_http2_accept[i].send_frame_size_max )
                                     {   if( !E_mem_Q_blk_I_append( &E_srv_S_http2_accept[i].buf_2, value - E_srv_S_http2_accept[i].send_frame_size_max ))
                                         {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
@@ -2766,6 +2828,7 @@ Http2_srv:                      ;
                         }
                         stream->buf_headers_l += frame_length;
                         E_mem_Q_blk_I_copy( p, E_srv_S_http2_accept[i].buf_, frame_length );
+                        E_srv_S_http2_accept[i].buf_ += frame_length;
                         if( frame_flags & E_http2_srv_Z_frame_type_continuation_Z_flag_S_end_headers )
                         {   p = stream->buf_headers;
                             if( !~E_http2_header_I_read( &stream->buf_headers, stream->buf_headers_l, &stream->headers, &stream->headers_n, &E_srv_S_http2_accept[i].dynamic_table_dec, &E_srv_S_http2_accept[i].dynamic_table_dec_n ))
@@ -2775,7 +2838,8 @@ Http2_srv:                      ;
                             for_n( i, stream->headers_n )
                             {   G_(); Gs0( stream->headers[i] );
                             }
-                            goto Http2_srv;
+                            if( stream->end_stream )
+                                goto Http2_srv;
                         }
                         break;
                     }
@@ -2819,7 +2883,9 @@ End2_1:     ;
                 {   V0( close( stream->file )){}
                 }
                 if( stream->buf_headers )
-                    W_( stream->buf_headers );
+                    W( stream->buf_headers );
+                if( stream->buf_post )
+                    W( stream->buf_post );
             }
             E_mem_Q_tab_W( E_srv_S_http2_accept[i].stream );
             W( E_srv_S_http2_accept[i].buf_2 );

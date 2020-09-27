@@ -20,6 +20,7 @@ enum E_http2_srv_Z_frame_type
 };
 enum E_http2_srv_Z_frame_flag
 { E_http2_srv_Z_frame_type_data_Z_flag_S_end_stream = 1
+, E_http2_srv_Z_frame_type_data_Z_flag_S_padded = 8
 , E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream = 1
 , E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers = 4
 , E_http2_srv_Z_frame_type_headers_Z_flag_S_padded = 8
