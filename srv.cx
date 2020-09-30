@@ -1731,9 +1731,11 @@ End2:       if( E_srv_S_http2_accept[i].preface )
                     goto End2_2;
                 }
                 E_srv_S_http2_accept[i].buf_ = E_srv_S_http2_accept[i].buf + 24;
-                Pc p = E_srv_S_http2_accept[i].buf_2;
-                E_http2_srv_I_write_header( &p, 0, E_http2_srv_Z_frame_type_S_settings, 0, 0 );
-                if( !~E_reply_I_data( E_srv_S_http2_accept[i].ssl, E_srv_S_http2_accept[i].listen_sock, E_srv_S_http2_accept[i].buf_2, p - E_srv_S_http2_accept[i].buf_2 ))
+                E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
+                E_http2_srv_I_write_header( &E_srv_S_http2_accept[i].buf_2_, 6, E_http2_srv_Z_frame_type_S_settings, 0, 0 );
+                E_http2_srv_I_write_n( &E_srv_S_http2_accept[i].buf_2_, E_http2_srv_Z_frame_type_setting_Z_max_concurrent_streams, 2 );
+                E_http2_srv_I_write_n( &E_srv_S_http2_accept[i].buf_2_, (I)~0, 4 );
+                if( !~E_reply_I_data( E_srv_S_http2_accept[i].ssl, E_srv_S_http2_accept[i].listen_sock, E_srv_S_http2_accept[i].buf_2, E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 ))
                 {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                     goto End2_2;
                 }
@@ -2199,17 +2201,23 @@ Http2_srv:                      ;
                                         else
                                             *s_1 = '\0';
                                         environ[ environ_i++ ] = s;
-                                        h = E_http2_header_R_header( stream->headers, stream->headers_n, "Cookie" );
-                                        l = E_text_Z_s0_R_l( "HTTP_COOKIE=" ) + ( h ? E_text_Z_s0_R_l(h) : 0 ) + 1;
+                                        l = E_text_Z_s0_R_l( "HTTP_COOKIE=" ) + 1;
+                                        N cookie_i = 0;
+                                        if( h = E_http2_header_R_header_n( stream->headers, stream->headers_n, "Cookie", cookie_i++ ))
+                                            l += E_text_Z_s0_R_l(h);
+                                        while( h = E_http2_header_R_header_n( stream->headers, stream->headers_n, "Cookie", cookie_i++ ))
+                                            l += 2 + E_text_Z_s0_R_l(h);
                                         s = M(l);
                                         if( !s )
                                         {   G_(); V();
                                         }
                                         s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_COOKIE=" );
-                                        if(h)
-                                            E_text_Z_s_P_s0_copy_0( s_1, h );
-                                        else
-                                            *s_1 = '\0';
+                                        cookie_i = 0;
+                                        if( h = E_http2_header_R_header_n( stream->headers, stream->headers_n, "Cookie", cookie_i++ ))
+                                            s_1 = E_text_Z_s_P_s0_copy( s_1, h );
+                                        while( h = E_http2_header_R_header_n( stream->headers, stream->headers_n, "Cookie", cookie_i++ ))
+                                            s_1 = E_text_Z_s_P_s0_copy( E_text_Z_s_P_s0_copy( s_1, "; " ), h );
+                                        *s_1 = '\0';
                                         environ[ environ_i++ ] = s;
                                         h = E_http2_header_R_header( stream->headers, stream->headers_n, ":authority" );
                                         l = E_text_Z_s0_R_l( "HTTP_HOST=" ) + E_text_Z_s0_R_l(h) + 1;
@@ -2478,8 +2486,9 @@ Http2_srv:                      ;
                                     }
                                     E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( headers[ headers_n ], "Server: " ), S_server_name );
                                     headers_n++;
-                                    Pc h = E_http2_header_R_header( stream->headers, stream->headers_n, "Cookie" );
-                                    if(h)
+                                    Pc h;
+                                    N cookie_i = 0;
+                                    while( h = E_http2_header_R_header_n( stream->headers, stream->headers_n, "Cookie", cookie_i++ ))
                                     {   if( !( E_mem_Q_blk_I_append( &headers, 1 )))
                                         {   for_n( headers_i, headers_n )
                                                 W( headers[ headers_i ] );

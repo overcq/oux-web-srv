@@ -337,6 +337,7 @@ E_http2_header_I_read_v( Pc *buffer
                 break;
             i += 7;
         }
+        value += max;
     }
     return value;
 }
@@ -351,7 +352,8 @@ E_http2_header_I_write_v( Pc *buffer
         return;
     }
     E_http2_srv_I_write_n( buffer, prefix_mask | max, 1 );
-    while( value >= 128 )
+    value -= max;
+    while( value > 0x7f )
     {   E_http2_srv_I_write_n( buffer, 0x80 | ( value & 0x7f ), 1 );
         value >>= 7;
     }
@@ -411,13 +413,15 @@ E_http2_header_I_read( Pc *buffer
 , Pc **dynamic_table
 , N *dynamic_table_n
 ){  while(length)
-    {   N8 b = E_http2_srv_I_read_n( buffer, 1 );
+    {   N v = E_http2_srv_I_read_n( buffer, 1 );
         length--;
-        if( b & 0x80 )
-        {   b = E_http2_header_I_read_v( buffer, 7, b );
-            if( b < E_http2_header_S_static_table_first_index )
+        if( v & 0x80 )
+        {   Pc buffer_ = *buffer;
+            v = E_http2_header_I_read_v( buffer, 7, v );
+            length -= *buffer - buffer_;
+            if( v < E_http2_header_S_static_table_first_index )
             {   Pc name;
-                switch(b)
+                switch(v)
                 { default:
                         return ~0;
                   case 2:
@@ -470,7 +474,7 @@ E_http2_header_I_read( Pc *buffer
                     return ~0;
                 }
                 E_text_Z_s_P_s0_copy_0( (*headers)[ *headers_n - 1 ], name );
-            }else if( b == 16 )
+            }else if( v == 16 )
             {   if( !E_mem_Q_blk_I_append( headers, 1 ))
                     return ~0;
                 (*headers_n)++;
@@ -481,43 +485,47 @@ E_http2_header_I_read( Pc *buffer
                 }
                 E_text_Z_s_P_s0_copy_0( (*headers)[ *headers_n - 1 ], "Accept-Encoding: gzip, deflate" );
             }else
-            {   b -= E_http2_header_S_static_table_first_index;
-                if( b < sizeof( E_http2_header_S_static_table ) / sizeof( E_http2_header_S_static_table[0] ))
+            {   v -= E_http2_header_S_static_table_first_index;
+                if( v < sizeof( E_http2_header_S_static_table ) / sizeof( E_http2_header_S_static_table[0] ))
                 {   if( !E_mem_Q_blk_I_append( headers, 1 ))
                         return ~0;
                     (*headers_n)++;
-                    N l = E_text_Z_s0_R_0_l( E_http2_header_S_static_table[b] ) + 1;
+                    N l = E_text_Z_s0_R_0_l( E_http2_header_S_static_table[v] ) + 1;
                     (*headers)[ *headers_n - 1 ] = M(l);
                     if( !(*headers)[ *headers_n - 1 ] )
                     {   E_mem_Q_blk_I_remove( headers, --*headers_n, 1 );
                         return ~0;
                     }
-                    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( (*headers)[ *headers_n - 1 ], E_http2_header_S_static_table[b] ), ":" );
+                    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( (*headers)[ *headers_n - 1 ], E_http2_header_S_static_table[v] ), ":" );
                 }else
-                {   b -= sizeof( E_http2_header_S_static_table ) / sizeof( E_http2_header_S_static_table[0] );
-                    if( b >= *dynamic_table_n )
+                {   v -= sizeof( E_http2_header_S_static_table ) / sizeof( E_http2_header_S_static_table[0] );
+                    if( v >= *dynamic_table_n )
                         return ~0;
                     if( !E_mem_Q_blk_I_append( headers, 1 ))
                         return ~0;
                     (*headers_n)++;
-                    N l = E_text_Z_s0_R_0_l( (*dynamic_table)[b] );
+                    N l = E_text_Z_s0_R_0_l( (*dynamic_table)[v] );
                     (*headers)[ *headers_n - 1 ] = M(l);
                     if( !(*headers)[ *headers_n - 1 ] )
                     {   E_mem_Q_blk_I_remove( headers, --*headers_n, 1 );
                         return ~0;
                     }
-                    E_text_Z_s_P_s0_copy_0( (*headers)[ *headers_n - 1 ], (*dynamic_table)[b] );
+                    E_text_Z_s_P_s0_copy_0( (*headers)[ *headers_n - 1 ], (*dynamic_table)[v] );
                 }
             }
-        }else if(( b & 0xc0 ) == 0x40 )
-        {   b = E_http2_header_I_read_v( buffer, 6, b );
+        }else if(( v & 0xc0 ) == 0x40 )
+        {   Pc buffer_ = *buffer;
+            v = E_http2_header_I_read_v( buffer, 6, v );
+            length -= *buffer - buffer_;
             Pc name;
-            if( !b )
+            if( !v )
             {   if( !length )
                     return ~0;
-                length--;
                 N8 name_length = E_http2_srv_I_read_n( buffer, 1 );
+                length--;
+                Pc buffer_ = *buffer;
                 N l = E_http2_header_I_read_v( buffer, 7, name_length );
+                length -= *buffer - buffer_;
                 if( length < l )
                     return ~0;
                 length -= l;
@@ -533,8 +541,8 @@ E_http2_header_I_read( Pc *buffer
                     name[l] = '\0';
                 }
             }else
-            {   if( b < E_http2_header_S_static_table_first_index )
-                {   switch(b)
+            {   if( v < E_http2_header_S_static_table_first_index )
+                {   switch(v)
                     { case 1:
                             name = M(11);
                             if( !name )
@@ -576,25 +584,25 @@ E_http2_header_I_read( Pc *buffer
                             break;
                     }
                 }else
-                {   b -= E_http2_header_S_static_table_first_index;
-                    if( b < sizeof( E_http2_header_S_static_table ) / sizeof( E_http2_header_S_static_table[0] ))
-                    {   N l = E_text_Z_s0_R_0_l( E_http2_header_S_static_table[b] );
+                {   v -= E_http2_header_S_static_table_first_index;
+                    if( v < sizeof( E_http2_header_S_static_table ) / sizeof( E_http2_header_S_static_table[0] ))
+                    {   N l = E_text_Z_s0_R_0_l( E_http2_header_S_static_table[v] );
                         name = M(l);
                         if( !name )
                             return ~0;
-                        E_text_Z_s_P_s0_copy_0( name, E_http2_header_S_static_table[b] );
+                        E_text_Z_s_P_s0_copy_0( name, E_http2_header_S_static_table[v] );
                     }else
-                    {   b -= sizeof( E_http2_header_S_static_table ) / sizeof( E_http2_header_S_static_table[0] );
-                        if( b >= *dynamic_table_n )
+                    {   v -= sizeof( E_http2_header_S_static_table ) / sizeof( E_http2_header_S_static_table[0] );
+                        if( v >= *dynamic_table_n )
                             return ~0;
-                        Pc s = E_text_Z_s0_R_c_search( (*dynamic_table)[b] + 1, ':' );
+                        Pc s = E_text_Z_s0_R_c_search( (*dynamic_table)[v] + 1, ':' );
                         if( !*s )
                             return ~0;
-                        N l = s - (*dynamic_table)[b] + 1;
+                        N l = s - (*dynamic_table)[v] + 1;
                         name = M(l);
                         if( !name )
                             return ~0;
-                        E_text_Z_s_P_s_copy_0( name, (*dynamic_table)[b], s );
+                        E_text_Z_s_P_s_copy_0( name, (*dynamic_table)[v], s );
                     }
                 }
             }
@@ -602,10 +610,12 @@ E_http2_header_I_read( Pc *buffer
             {   W(name);
                 return ~0;
             }
-            length--;
             N8 value_length = E_http2_srv_I_read_n( buffer, 1 );
+            length--;
             Pc value;
+            buffer_ = *buffer;
             N l = E_http2_header_I_read_v( buffer, 7, value_length );
+            length -= *buffer - buffer_;
             if( length < l )
             {   W(name);
                 return ~0;
@@ -657,17 +667,21 @@ E_http2_header_I_read( Pc *buffer
             E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( E_text_Z_s_P_s0_copy( (*dynamic_table)[ *dynamic_table_n - 1 ], name ), ": " ), value );
             W(value);
             W(name);
-        }else if(( b & 0xf0 ) == 0
-        || ( b & 0xf0 ) == 0x10
+        }else if(( v & 0xf0 ) == 0
+        || ( v & 0xf0 ) == 0x10
         )
-        {   b = E_http2_header_I_read_v( buffer, 4, b );
+        {   Pc buffer_ = *buffer;
+            v = E_http2_header_I_read_v( buffer, 4, v );
+            length -= *buffer - buffer_;
             Pc name;
-            if( !b )
+            if( !v )
             {   if( !length )
                     return ~0;
-                length--;
                 N8 name_length = E_http2_srv_I_read_n( buffer, 1 );
+                length--;
+                Pc buffer_ = *buffer;
                 N l = E_http2_header_I_read_v( buffer, 7, name_length );
+                length -= *buffer - buffer_;
                 if( length < l )
                     return ~0;
                 length -= l;
@@ -686,10 +700,12 @@ E_http2_header_I_read( Pc *buffer
                 {   W(name);
                     return ~0;
                 }
-                length--;
                 N8 value_length = E_http2_srv_I_read_n( buffer, 1 );
+                length--;
                 Pc value;
+                buffer_ = *buffer;
                 l = E_http2_header_I_read_v( buffer, 7, value_length );
+                length -= *buffer - buffer_;
                 if( length < l )
                 {   W(name);
                     return ~0;
@@ -730,10 +746,12 @@ E_http2_header_I_read( Pc *buffer
             }else
             {   if( !length )
                     return ~0;
-                length--;
                 N8 value_length = E_http2_srv_I_read_n( buffer, 1 );
+                length--;
                 Pc value;
+                Pc buffer_ = *buffer;
                 N l = E_http2_header_I_read_v( buffer, 7, value_length );
+                length -= *buffer - buffer_;
                 if( length < l )
                     return ~0;
                 length -= l;
@@ -748,8 +766,8 @@ E_http2_header_I_read( Pc *buffer
                     E_http2_srv_I_read_s_l( buffer, value, l );
                     value[l] = '\0';
                 }
-                if( b < E_http2_header_S_static_table_first_index )
-                    switch(b)
+                if( v < E_http2_header_S_static_table_first_index )
+                    switch(v)
                     { case 1:
                             name = M(11);
                             if( !name )
@@ -791,12 +809,12 @@ E_http2_header_I_read( Pc *buffer
                             break;
                     }
                 else
-                {   b -= E_http2_header_S_static_table_first_index;
-                    N l = E_text_Z_s0_R_0_l( E_http2_header_S_static_table[b] );
+                {   v -= E_http2_header_S_static_table_first_index;
+                    N l = E_text_Z_s0_R_0_l( E_http2_header_S_static_table[v] );
                     name = M(l);
                     if( !name )
                         return ~0;
-                    E_text_Z_s_P_s0_copy_0( name, E_http2_header_S_static_table[b] );
+                    E_text_Z_s_P_s0_copy_0( name, E_http2_header_S_static_table[v] );
                 }
                 if( !E_mem_Q_blk_I_append( headers, 1 ))
                 {   W(value);
@@ -816,13 +834,15 @@ E_http2_header_I_read( Pc *buffer
                 W(value);
                 W(name);
             }
-        }else if(( b & 0xe0 ) == 0x20 )
-        {   b = E_http2_header_I_read_v( buffer, 5, b );
-            if( b < *dynamic_table_n )
-            {   for_n( i, *dynamic_table_n - b )
-                    W( (*dynamic_table)[ b + i ] );
-                E_mem_Q_blk_I_remove( dynamic_table, b, *dynamic_table_n - b );
-                *dynamic_table_n = b;
+        }else if(( v & 0xe0 ) == 0x20 )
+        {   Pc buffer_ = *buffer;
+            v = E_http2_header_I_read_v( buffer, 5, v );
+            length -= *buffer - buffer_;
+            if( v < *dynamic_table_n )
+            {   for_n( i, *dynamic_table_n - v )
+                    W( (*dynamic_table)[ v + i ] );
+                E_mem_Q_blk_I_remove( dynamic_table, v, *dynamic_table_n - v );
+                *dynamic_table_n = v;
             }
         }
     }
@@ -1012,7 +1032,7 @@ E_http2_header_I_write( Pc *buffer
                 if( E_text_Z_s0_T_s0_starts_case( headers[ headers_i ], s ))
                 {   W(s);
                     index = E_http2_header_S_static_table_first_index + i;
-                    if( index == 16 )
+                    if( index == 16 ) /// Accept-Encoding
                     {   if( E_text_Z_s0_T_s0_eq( headers[ headers_i ] + l, "gzip, deflate" ))
                             E_http2_header_I_write_v( buffer, 0x80, 7, index );
                         else
@@ -1028,14 +1048,23 @@ E_http2_header_I_write( Pc *buffer
                                 return ~0;
                         }
                     }else
-                    {   if( !E_mem_Q_blk_I_append( dynamic_table, 1 ))
-                            return ~0;
-                        (*dynamic_table_n)++;
-                        (*dynamic_table)[ *dynamic_table_n - 1 ] = M( E_text_Z_s0_R_l( headers[ headers_i ] ) + 1 );
-                        if( !(*dynamic_table)[ *dynamic_table_n - 1 ] )
-                            return ~0;
-                        E_text_Z_s_P_s0_copy_0( (*dynamic_table)[ *dynamic_table_n - 1 ], headers[ headers_i ] );
-                        E_http2_header_I_write_v( buffer, 0x40, 6, index );
+                    {   switch(index)
+                        { case 50: /// Range
+                          case 51: /// Referer
+                          case 55: /// Set-Cookie
+                                E_http2_header_I_write_v( buffer, 0, 4, index );
+                                break;
+                          default:
+                                if( !E_mem_Q_blk_I_append( dynamic_table, 1 ))
+                                    return ~0;
+                                (*dynamic_table_n)++;
+                                (*dynamic_table)[ *dynamic_table_n - 1 ] = M( E_text_Z_s0_R_l( headers[ headers_i ] ) + 1 );
+                                if( !(*dynamic_table)[ *dynamic_table_n - 1 ] )
+                                    return ~0;
+                                E_text_Z_s_P_s0_copy_0( (*dynamic_table)[ *dynamic_table_n - 1 ], headers[ headers_i ] );
+                                E_http2_header_I_write_v( buffer, 0x40, 6, index );
+                                break;
+                        }
                         if( !~E_http2_header_I_encode_or_plain( buffer, headers[ headers_i ] + l ))
                             return ~0;
                     }
@@ -1105,20 +1134,29 @@ E_http2_header_I_write( Pc *buffer
     return 0;
 }
 Pc
-E_http2_header_R_header( Pc *headers
+E_http2_header_R_header_n( Pc *headers
 , N headers_n
 , Pc header
+, N n
 ){  N l = E_text_Z_s0_R_l(header) + 2;
     Pc s = M( l + 1 );
     if( !s )
         return 0;
     E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, header ), ": " );
     for_n( i, headers_n )
-        if( E_text_Z_s0_T_s0_starts_case( headers[i], s ))
+        if( E_text_Z_s0_T_s0_starts_case( headers[i], s )
+        && !n--
+        )
         {   W(s);
             return headers[i] + l;
         }
     W(s);
     return 0;
+}
+Pc
+E_http2_header_R_header( Pc *headers
+, N headers_n
+, Pc header
+){  return E_http2_header_R_header_n( headers, headers_n, header, 0 );
 }
 /******************************************************************************/
