@@ -94,7 +94,7 @@ struct E_srv_Z_http2_accept
   N buf_l;
   Z_clock_time keepalive_tv;
   B preface;
-  N dynamic_table_size_max;
+  N send_dynamic_table_size_max;
   B push;
   N concurrent_streams_max;
   S recv_window_size;
@@ -528,7 +528,7 @@ End_5:      ;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].peer_addr = peer_addr;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].buf_l = 0;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].preface = yes;
-                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].dynamic_table_size_max = 4096;
+                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].send_dynamic_table_size_max = 4096;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].push = yes;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].concurrent_streams_max = ~0;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].recv_window_size = 1024 * 1024;
@@ -1878,7 +1878,7 @@ Http2_srv:                      ;
                                     W_( stream->buf_headers );
                                 Pc authority = E_http2_header_R_header( stream->headers, stream->headers_n, ":authority" );
                                 if( !authority )
-                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                     {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                         goto End2_2;
                                     }
@@ -1888,7 +1888,7 @@ Http2_srv:                      ;
                                     if( E_text_Z_s0_T_s0_eq_case( authority, E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost[k].host ))
                                         break;
                                 if( k == E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost_n )
-                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                     {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                         goto End2_2;
                                     }
@@ -1896,7 +1896,7 @@ Http2_srv:                      ;
                                 }
                                 Pc h = E_http2_header_R_header( stream->headers, stream->headers_n, ":method" );
                                 if( !h )
-                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                     {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                         goto End2_2;
                                     }
@@ -1906,7 +1906,7 @@ Http2_srv:                      ;
                                 if( !post
                                 && !E_text_Z_s0_T_s0_eq( h, "GET" )
                                 )
-                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                     {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                         goto End2_2;
                                     }
@@ -1914,7 +1914,7 @@ Http2_srv:                      ;
                                 }
                                 Pc header_path = E_http2_header_R_header( stream->headers, stream->headers_n, ":path" );
                                 if( !header_path )
-                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                     {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                         goto End2_2;
                                     }
@@ -1928,7 +1928,7 @@ Http2_srv:                      ;
                                 N l = E_text_Z_s0_R_0_l( E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost[k].root_path ) + 1;
                                 Pc path = M(l);
                                 if( !path )
-                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                {   if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                     {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                         goto End2_2;
                                     }
@@ -1968,7 +1968,7 @@ Http2_srv:                      ;
                                     if( s_2 == s_1 )
                                     {   if( path_n < path_n_0 + ( s_1 - ( s + 1 ) - 1 ))
                                         {   W(path);
-                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 400, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                             {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                                 goto End2_2;
                                             }
@@ -1982,7 +1982,7 @@ Http2_srv:                      ;
                                             N s_2_i = s_2 - path;
                                             if( !E_mem_Q_blk_I_remove( &path, s_2 + 1 - path, path_end - ( s_2 + 1 )))
                                             {   W(path);
-                                                if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                                if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                                 {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                                     goto End2_2;
                                                 }
@@ -1996,7 +1996,7 @@ Http2_srv:                      ;
                                     {   N path_i = path_end - path;
                                         if( !E_mem_Q_blk_I_append( &path, s_1 + 1 - ( s + 1 )))
                                         {   W(path);
-                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                             {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                                 goto End2_2;
                                             }
@@ -2014,7 +2014,7 @@ Http2_srv:                      ;
                                 {   N path_end_i = path_end - path;
                                     if( !E_mem_Q_blk_I_append( &path, s_1 - ( s + 1 )))
                                     {   W(path);
-                                        if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                        if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                         {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                             goto End2_2;
                                         }
@@ -2028,7 +2028,7 @@ Http2_srv:                      ;
                                 {   N path_end_i = path_end - path;
                                     if( !E_mem_Q_blk_I_append( &path, E_text_Z_s0_R_l( S_php_index_file )))
                                     {   W(path);
-                                        if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                        if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                         {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                             goto End2_2;
                                         }
@@ -2040,7 +2040,7 @@ Http2_srv:                      ;
                                     V0( access( path, F_OK ))
                                     {   if( !E_mem_Q_blk_I_remove( &path, path_end_i, E_text_Z_s0_R_l( S_php_index_file )))
                                         {   W(path);
-                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                             {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                                 goto End2_2;
                                             }
@@ -2048,7 +2048,7 @@ Http2_srv:                      ;
                                         }
                                         if( !E_mem_Q_blk_I_append( &path, E_text_Z_s0_R_l( S_html_index_file )))
                                         {   W(path);
-                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                             {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                                 goto End2_2;
                                             }
@@ -2065,7 +2065,7 @@ Http2_srv:                      ;
                                 {   gz = no; /// Nie obsługuje kompresji strumienia PHP.
                                     V0( access( path, F_OK ))
                                     {   W(path);
-                                        if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 404, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                        if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 404, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                         {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                             goto End2_2;
                                         }
@@ -2075,7 +2075,7 @@ Http2_srv:                      ;
                                     struct E_flow_Z_args *Mt_( args, args_n );
                                     if( !args )
                                     {   W(path);
-                                        if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                        if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                         {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                             goto End2_2;
                                         }
@@ -2084,7 +2084,7 @@ Http2_srv:                      ;
                                     V0( pipe( &E_srv_S_subprocess_pipe[0] ))
                                     {   W(args);
                                         W(path);
-                                        if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                        if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                         {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                             goto End2_2;
                                         }
@@ -2528,7 +2528,7 @@ Http2_srv:                      ;
                                     }
                                     Pc p = E_srv_S_http2_accept[i].buf_2_;
                                     E_srv_S_http2_accept[i].buf_2_ += 9;
-                                    if( !~E_http2_header_I_write( &E_srv_S_http2_accept[i].buf_2_, headers, headers_n, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                    if( !~E_http2_header_I_write( &E_srv_S_http2_accept[i].buf_2_, headers, headers_n, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                     {   for_n( headers_i, headers_n )
                                             W( headers[ headers_i ] );
                                         W(headers);
@@ -2554,7 +2554,12 @@ Http2_srv:                      ;
                                             E_mem_Q_blk_I_copy( E_srv_S_http2_accept[i].buf_2_, s, l_ );
                                             E_srv_S_http2_accept[i].buf_2_ += l_;
                                             while(l)
-                                            {   l_ = J_min( l, E_srv_S_http2_accept[i].send_frame_size_max );
+                                            {   if( !~E_reply_I_data( E_srv_S_http2_accept[i].ssl, E_srv_S_http2_accept[i].listen_sock, E_srv_S_http2_accept[i].buf_2, E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 ))
+                                                {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                    goto End2_2;
+                                                }
+                                                E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
+                                                l_ = J_min( l, E_srv_S_http2_accept[i].send_frame_size_max );
                                                 l -= l_;
                                                 E_http2_srv_I_write_header( &E_srv_S_http2_accept[i].buf_2_, l_, E_http2_srv_Z_frame_type_S_data, l ? 0 : E_http2_srv_Z_frame_type_data_Z_flag_S_end_stream, frame_stream );
                                                 //G_(); Gsl( s, l_ );
@@ -2571,7 +2576,12 @@ Http2_srv:                      ;
                                             E_mem_Q_blk_I_copy( E_srv_S_http2_accept[i].buf_2_, s, l_ );
                                             E_srv_S_http2_accept[i].buf_2_ += l_;
                                             while(l)
-                                            {   l_ = J_min( l, E_srv_S_http2_accept[i].send_frame_size_max );
+                                            {   if( !~E_reply_I_data( E_srv_S_http2_accept[i].ssl, E_srv_S_http2_accept[i].listen_sock, E_srv_S_http2_accept[i].buf_2, E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 ))
+                                                {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                    goto End2_2;
+                                                }
+                                                E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
+                                                l_ = J_min( l, E_srv_S_http2_accept[i].send_frame_size_max );
                                                 l -= l_;
                                                 E_http2_srv_I_write_header( &E_srv_S_http2_accept[i].buf_2_, l_, E_http2_srv_Z_frame_type_S_data, 0, frame_stream );
                                                 //G_(); Gsl( s, l_ );
@@ -2614,7 +2624,7 @@ Http2_srv:                      ;
                                     {   gz = no;
                                         V1( stream->file = open( path, O_RDONLY ))
                                         {   W(path);
-                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 404, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 404, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                             {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                                 goto End2_2;
                                             }
@@ -2624,7 +2634,7 @@ Http2_srv:                      ;
                                     {   N path_i = path_end - path;
                                         if( !E_mem_Q_blk_I_append( &path, 3 ))
                                         {   W(path);
-                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                             {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                                 goto End2_2;
                                             }
@@ -2637,7 +2647,7 @@ Http2_srv:                      ;
                                             *path_end = '\0';
                                             V1( stream->file = open( path, O_RDONLY ))
                                             {   W(path);
-                                                if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 404, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                                if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 404, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                                 {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                                                     goto End2_2;
                                                 }
@@ -2721,7 +2731,7 @@ Http2_srv:                      ;
                                     }
                                     Pc p = E_srv_S_http2_accept[i].buf_2_;
                                     E_srv_S_http2_accept[i].buf_2_ += 9;
-                                    if( !~E_http2_header_I_write( &E_srv_S_http2_accept[i].buf_2_, headers, headers_n, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].dynamic_table_size_max ))
+                                    if( !~E_http2_header_I_write( &E_srv_S_http2_accept[i].buf_2_, headers, headers_n, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max ))
                                     {   for_n( headers_i, headers_n )
                                             W( headers[ headers_i ] );
                                         W(headers);
@@ -2779,7 +2789,7 @@ Http2_srv:                      ;
                             G_(); Gd(identifier); Gd(value);
                             switch(identifier)
                             { case E_http2_srv_Z_frame_type_setting_Z_header_table_size:
-                                    E_srv_S_http2_accept[i].dynamic_table_size_max = value;
+                                    E_srv_S_http2_accept[i].send_dynamic_table_size_max = value;
                                     break;
                               case E_http2_srv_Z_frame_type_setting_Z_enable_push:
                                     E_srv_S_http2_accept[i].push = value;

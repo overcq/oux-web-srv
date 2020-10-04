@@ -190,10 +190,15 @@ E_conf_I_read( I conf_file
     || !~entities_root_path
     || !~entities_host
     )
+    {   E_text_syntax_Q_state_W( state, state_n );
         return ~0;
+    }
     N ret = E_text_syntax_Q_state_I_parse( conf_file, syntax, &state, &state_n, entities_func );
     if( !~ret )
-        goto End;
+    {   E_text_syntax_Q_state_W( state, state_n );
+        E_text_syntax_W(syntax);
+        return ~0;
+    }
     E_text_syntax_Q_state_W( state, state_n );
     E_text_syntax_W(syntax);
     if( !E_conf_S_bind_n )
@@ -217,8 +222,5 @@ E_conf_I_read( I conf_file
         }
     }
     return 0;
-End:E_text_syntax_Q_state_W( state, state_n );
-    E_text_syntax_W(syntax);
-    return ~0;
 }
 /******************************************************************************/
