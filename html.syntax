@@ -1,0 +1,91 @@
+body
+    doctype ?
+    odstępy ?
+    znaczniki
+    @eof
+
+doctype
+    "<!DOCTYPE"
+    odstępy
+    /[Hh][Tt][Mm][Ll][^>]*/
+    ">"
+znaczniki
+    znacznik ...
+znacznik
+    treść dokumentu | znacznik komentarza | znacznik rozpoczynający | znacznik kończący
+znacznik rozpoczynający
+    "<"
+    nazwa znacznika
+    wypełnienie znacznika ?
+    zamknięcie znacznika ?
+    ">"
+znacznik kończący
+    "</"
+    nazwa znacznika
+    ">"
+znacznik komentarza
+    "<!--"
+    /[^>]*/
+    "-->"
+zamknięcie znacznika
+    odstępy ?
+    "/"
+
+nazwa znacznika
+    img | link | inna nazwa znacznika
+img
+    /[Ii][Mm][Gg]/
+link
+    /[Ll][Ii][Nn][Kk]/
+inna nazwa znacznika
+    /[A-Za-z]+[0-9A-Za-z]?/
+wypełnienie znacznika
+    atrybut ...
+
+atrybut
+    odstępy
+    nazwa atrybutu
+    wartość atrybutu ze znakiem równości ?
+nazwa atrybutu
+    href | src | inna nazwa atrybutu
+href
+    /[Hh][Rr][Ee][Ff]/
+src
+    /[Ss][Rr][Cc]/
+inna nazwa atrybutu
+    /[-A-Za-z]+/
+wartość atrybutu ze znakiem równości
+    "="
+    wartość atrybutu ?
+wartość atrybutu
+    wartość atrybutu w podwójnych cudzysłowach | wartość atrybutu w pojedynczych cudzysłowach | wartość atrybutu bez cudzysłowów
+wartość atrybutu w podwójnych cudzysłowach
+    "\""
+    /[^\"]*/
+    "\""
+wartość atrybutu w pojedynczych cudzysłowach
+    "\'"
+    /[^\']*/
+    "\'"
+wartość atrybutu bez cudzysłowów
+    /[^ \t\n>]*/
+
+treść dokumentu
+    /[^<]+/
+
+odstępy
+    odstęp ...
+odstępy linii
+    odstęp linii ...
+
+odstęp
+    odstęp zwykły | odstęp tabulacji | koniec linii
+odstęp linii
+    odstęp zwykły | odstęp tabulacji
+
+koniec linii
+    "\n"
+odstęp zwykły
+	" "
+odstęp tabulacji
+	"\t"

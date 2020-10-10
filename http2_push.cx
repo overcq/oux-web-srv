@@ -1,0 +1,126 @@
+/*******************************************************************************
+*   ___   workplace
+*  ¦OUX¦  C+
+*  ¦/C+¦  server
+*   ---   web server
+*         HTTP/2 push
+* ©overcq                on ‟Gentoo Linux 17.1” “x86_64”             2020‒10‒4 N
+*******************************************************************************/
+struct E_text_syntax_Z_body *E_http2_push_Z_syntax_html;
+N entities_tag, entities_img, entities_link;
+N entities_href, entities_src, entities_attr, entities_oth_attr;
+enum E_http2_push_Z_tag
+{ E_http2_push_Z_tag_S_oth
+, E_http2_push_Z_tag_S_img
+, E_http2_push_Z_tag_S_link
+};
+enum E_http2_push_Z_tag E_http2_push_S_tag;
+B attr;
+Pc *E_http2_push_S_links;
+N E_http2_push_S_links_n;
+//==============================================================================
+B
+E_http2_push_T_pushable_data( Pc s
+, N l
+){  return ( E_text_Z_s_T_s0_starts( s, s + l, "<!DOCTYPE " )
+      && E_text_Z_s_T_s0_starts_case( s + 10, s + l, "html" )
+    )
+    || E_text_Z_s_T_s0_starts_case( s, s + l, "<html" );
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+I
+E_http2_push_Q_file_M( Pc *s
+){  int fd;
+    Pc s_ = M( 22 + 1 );
+    if( !s_ )
+        return ~0;
+    E_text_Z_s_P_s0_copy_0( s_, "/tmp/http2_push_XXXXXX" );
+    V1( fd = mkstemp( s_ ) )
+    {   W( s_ );
+        return ~0;
+    }
+    I file = E_mem_Q_file_M_fd(fd);
+    if( !~file )
+    {   VO0( close(fd) ){}
+        V0( unlink( s_ ) ){}
+        W( s_ );
+        return ~0;
+    }
+    *s = s_;
+    return file;
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+N
+E_http2_push_I_entities_func_Z_html( struct E_text_syntax_Z_body *syntax
+, struct E_text_syntax_Z_state *state
+, N state_n
+){  if( state[ state_n - 1 ].entities_i == entities_tag )
+        E_http2_push_S_tag = E_http2_push_Z_tag_S_oth;
+    else if( state[ state_n - 1 ].entities_i == entities_img )
+        E_http2_push_S_tag = E_http2_push_Z_tag_S_img;
+    else if( state[ state_n - 1 ].entities_i == entities_link )
+        E_http2_push_S_tag = E_http2_push_Z_tag_S_link;
+    else if( state[ state_n - 1 ].entities_i == entities_href
+    && E_http2_push_S_tag == E_http2_push_Z_tag_S_link
+    )
+    {   attr = yes;
+    }else if( state[ state_n - 1 ].entities_i == entities_src
+    && E_http2_push_S_tag == E_http2_push_Z_tag_S_img
+    )
+    {   attr = yes;
+    }else if( state[ state_n - 1 ].entities_i == entities_attr
+    && attr
+    )
+    {   N l = E_text_Z_s0_R_l( state[ state_n - 1 ].s );
+        if( l
+        && E_mem_Q_blk_I_append( &E_http2_push_S_links, 1 )
+        )
+        {   E_http2_push_S_links[ E_http2_push_S_links_n ] = M( l + 1 );
+            if( E_http2_push_S_links[ E_http2_push_S_links_n ] )
+            {   Pc s = state[ state_n - 1 ].s;
+                Pc s_end = s + l;
+                if( state[ state_n - 1 ].s[0] == '\''
+                || state[ state_n - 1 ].s[0] == '\"'
+                )
+                {   s++;
+                    s_end--;
+                }
+                E_text_Z_s_P_s_copy_0( E_http2_push_S_links[ E_http2_push_S_links_n ], s, s_end );
+                E_http2_push_S_links_n++;
+            }else
+                E_mem_Q_blk_I_remove( &E_http2_push_S_links, E_http2_push_S_links_n, 1 );
+        }
+    }else if( state[ state_n - 1 ].entities_i == entities_oth_attr )
+        attr = no;
+    return 0;
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+N
+E_http2_push_M( void
+){  I file = E_mem_Q_file_M( "html.syntax", yes );
+    if( !~file )
+        return ~0;
+    if( !~E_text_syntax_M( file, &E_http2_push_Z_syntax_html ))
+    {   E_mem_Q_file_W(file);
+        return ~0;
+    }
+    E_mem_Q_file_W(file);
+    entities_tag = E_text_syntax_R_entity_by_name( E_http2_push_Z_syntax_html, "inna nazwa znacznika" );
+    entities_img = E_text_syntax_R_entity_by_name( E_http2_push_Z_syntax_html, "img" );
+    entities_link = E_text_syntax_R_entity_by_name( E_http2_push_Z_syntax_html, "link" );
+    entities_href = E_text_syntax_R_entity_by_name( E_http2_push_Z_syntax_html, "href" );
+    entities_src = E_text_syntax_R_entity_by_name( E_http2_push_Z_syntax_html, "src" );
+    entities_attr = E_text_syntax_R_entity_by_name( E_http2_push_Z_syntax_html, "wartość atrybutu" );
+    entities_oth_attr = E_text_syntax_R_entity_by_name( E_http2_push_Z_syntax_html, "inna nazwa atrybutu" );
+    if( !~entities_tag
+    || !~entities_img
+    || !~entities_link
+    || !~entities_href
+    || !~entities_src
+    || !~entities_attr
+    || !~entities_oth_attr
+    )
+        return ~0;
+    return 0;
+}
+/******************************************************************************/

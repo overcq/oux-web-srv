@@ -18,6 +18,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 struct E_conf_Z_virtualhost
 { Pc root_path;
+  N root_path_n;
   Pc host;
 };
 struct E_conf_Z_bind
@@ -95,6 +96,10 @@ entities_func( struct E_text_syntax_Z_body *syntax
         if( E_conf_Z_s0_Z_path_P_normalize( &s ))
             return ~0;
         E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost[ E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost_n - 1 ].root_path = s;
+        N path_n = 1;
+        while( *( s = E_text_Z_s0_R_c_search( s + 1, '/' )))
+            path_n++;
+        E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost[ E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost_n - 1 ].root_path_n = path_n;
     }else if( state[ state_n - 1 ].entities_i == entities_host )
     {   if( E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost[ E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost_n - 1 ].host )
             return ~0;

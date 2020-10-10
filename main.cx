@@ -46,6 +46,9 @@ main(
     if( !~E_main_I_read_conf() )
     {   G_(); Gs0_( "error: reading config file" ); V();
     }
+    if( !~E_http2_push_M() )
+    {   G_(); Gs0_( "error: initializing HTTP/2 push" ); V();
+    }
     if( !~E_srv_M() )
     {   G_(); Gs0_( "error: initializing server" ); V();
     }
@@ -60,6 +63,7 @@ main(
             break;
     }
     Dh_W( srv, srv, 0 );
+    E_text_syntax_W( E_http2_push_Z_syntax_html );
     W( E_srv_S_http2_accept );
     W( E_srv_S_accept );
     W( E_srv_S_srv );
