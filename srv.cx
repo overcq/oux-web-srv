@@ -87,6 +87,8 @@ struct E_srv_Z_http2_stream
   I push_file;
   Pc push_filename;
   B start_data;
+  Pc *push_links;
+  N push_links_n;
 };
 struct E_srv_Z_http2_accept
 { int poll_fd;
@@ -452,6 +454,11 @@ D( srv, srv )
                         W( stream->buf_headers );
                     if( stream->buf_post )
                         W( stream->buf_post );
+                    if( stream->push_links )
+                    {   for_n( k, stream->push_links_n )
+                            W( stream->push_links[k] );
+                        W( stream->push_links );
+                    }
                 }
                 E_mem_Q_tab_W( E_srv_S_http2_accept[i].stream );
                 W( E_srv_S_http2_accept[i].buf_2 );
@@ -1691,11 +1698,13 @@ End_1:      if( E_srv_S_accept[i].ssl )
                             if( E_http2_push_S_links )
                             {   E_http2_push_S_links_n = 0;
                                 E_text_syntax_Q_state_I_parse( stream->push_file, E_http2_push_Z_syntax_html, &state, &state_n, &E_http2_push_I_entities_func_Z_html );
+                                E_http2_push_I_parse_links( E_http2_header_R_header( stream->headers, stream->headers_n, ":path" ), &stream->push_links, &stream->push_links_n, E_http2_header_R_header( stream->headers, stream->headers_n, ":authority" ) );
                                 for_n( k, E_http2_push_S_links_n )
-                                {   G_(); Gs0( E_http2_push_S_links[k] );
                                     W( E_http2_push_S_links[k] );
-                                }
                                 W( E_http2_push_S_links );
+                                for_n_( k, stream->push_links_n )
+                                {   G_(); Gs0( stream->push_links[k] );
+                                }
                             }
                         }
                         E_text_syntax_Q_state_W( state, state_n );
@@ -1877,6 +1886,7 @@ End2:       if( E_srv_S_http2_accept[i].preface )
                         stream->send_window_size = E_srv_S_http2_accept[i].send_window_size;
                         stream->push_file = ~0;
                         stream->start_data = no;
+                        stream->push_links = 0;
                         Mt_( stream->headers, 0 );
                         if( !stream->headers )
                         {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
@@ -2646,11 +2656,13 @@ Http2_srv:                      ;
                                                 if( E_http2_push_S_links )
                                                 {   E_http2_push_S_links_n = 0;
                                                     E_text_syntax_Q_state_I_parse( stream->push_file, E_http2_push_Z_syntax_html, &state, &state_n, &E_http2_push_I_entities_func_Z_html );
+                                                    E_http2_push_I_parse_links( E_http2_header_R_header( stream->headers, stream->headers_n, ":path" ), &stream->push_links, &stream->push_links_n, E_http2_header_R_header( stream->headers, stream->headers_n, ":authority" ) );
                                                     for_n( k, E_http2_push_S_links_n )
-                                                    {   G_(); Gs0( E_http2_push_S_links[k] );
                                                         W( E_http2_push_S_links[k] );
-                                                    }
                                                     W( E_http2_push_S_links );
+                                                    for_n_( k, stream->push_links_n )
+                                                    {   G_(); Gs0( stream->push_links[k] );
+                                                    }
                                                 }
                                             }
                                             E_text_syntax_Q_state_W( state, state_n );
@@ -2955,7 +2967,8 @@ Http2_srv:                      ;
                     }
                   case E_http2_srv_Z_frame_type_S_push_promise:
                     {   G_();
-                        break;
+                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_protocol_error;
+                        goto End2_2;
                     }
                   case E_http2_srv_Z_frame_type_S_ping:
                     {   G_();
@@ -3078,6 +3091,11 @@ End2_1:     ;
                     W( stream->buf_headers );
                 if( stream->buf_post )
                     W( stream->buf_post );
+                if( stream->push_links )
+                {   for_n( k, stream->push_links_n )
+                        W( stream->push_links[k] );
+                    W( stream->push_links );
+                }
             }
             E_mem_Q_tab_W( E_srv_S_http2_accept[i].stream );
             W( E_srv_S_http2_accept[i].buf_2 );

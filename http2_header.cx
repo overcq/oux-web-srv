@@ -428,7 +428,8 @@ E_http2_header_I_encode_or_plain( Pc *buffer
         for_n( i, length )
             E_http2_srv_I_write_n( buffer, buffer_[i], 1 );
     }else
-    {   E_http2_header_I_write_v( buffer, 0, 7, l );
+    {   W( buffer_ );
+        E_http2_header_I_write_v( buffer, 0, 7, l );
         while( *s )
         {   E_http2_srv_I_write_n( buffer, *s, 1 );
             s++;
