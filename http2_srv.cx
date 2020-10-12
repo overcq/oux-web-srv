@@ -26,6 +26,8 @@ enum E_http2_srv_Z_frame_flag
 , E_http2_srv_Z_frame_type_headers_Z_flag_S_padded = 8
 , E_http2_srv_Z_frame_type_headers_Z_flag_S_priority = 0x20
 , E_http2_srv_Z_frame_type_settings_Z_flag_S_ack = 1
+, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_end_headers = 4
+, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_padded = 8
 , E_http2_srv_Z_frame_type_ping_Z_flag_S_ack = 1
 , E_http2_srv_Z_frame_type_continuation_Z_flag_S_end_headers = 4
 };
@@ -96,6 +98,7 @@ E_http2_srv_I_reply_code( N frame_stream
 , Pc **dynamic_table
 , N *dynamic_table_n
 , N dynamic_table_size_max
+, B *dynamic_table_size_max_hit
 ){  G_(); Gd(code);
     Pc *Mt_( headers, 1 );
     if( !headers )
@@ -109,7 +112,7 @@ E_http2_srv_I_reply_code( N frame_stream
     E_text_Z_n_N_s( s + 3, code, sizeof(code), 10 );
     *( s + 3 ) = '\0';
     Pc buffer_ = *buffer + 9;
-    if( !~E_http2_header_I_write( &buffer_, headers, 1, dynamic_table, dynamic_table_n, dynamic_table_size_max ))
+    if( !~E_http2_header_I_write( &buffer_, headers, 1, dynamic_table, dynamic_table_n, dynamic_table_size_max, dynamic_table_size_max_hit ))
     {   W( headers[0] );
         W(headers);
         return ~0;
