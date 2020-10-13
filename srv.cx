@@ -918,7 +918,7 @@ End:            ;
                 }
                 Pc new_end = E_text_Z_s_R_c_search( inheader.host.start, inheader.host.end, ':' );
                 Pc old_end;
-                N16 port;
+                N16 port = E_srv_S_accept[i].ssl ? 443 : 80;
                 B port_found = no;
                 if( new_end != inheader.host.end )
                 {   port_found = yes;
@@ -937,6 +937,7 @@ End:            ;
                     )
                         break;
                 if( port_found )
+                
                     inheader.host.end = old_end;
                 if( k == E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost_n )
                 {   E_reply_I_code( E_srv_S_accept[i].ssl, E_srv_S_accept[i].listen_sock, 400, yes, http_11 );
@@ -2053,7 +2054,7 @@ Http2_srv:                      ;
                                     goto End2_3;
                                 }
                                 Pc s = E_text_Z_s0_R_c_search( authority, ':' );
-                                N16 port;
+                                N16 port = 443;
                                 B port_found = no;
                                 if( *s )
                                 {   port_found = yes;
@@ -2068,6 +2069,7 @@ Http2_srv:                      ;
                                         goto End2_3;
                                     }
                                 }
+                                G_(); Gd(port); Gs0(authority);
                                 for_n( k, E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost_n )
                                     if( port == E_conf_S_bind[ E_srv_S_srv[j].bind_i ].port
                                     && E_text_Z_s0_T_s0_eq_case( authority, E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost[k].host )
