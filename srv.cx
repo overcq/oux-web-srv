@@ -91,8 +91,6 @@ struct E_srv_Z_http2_stream
   I push_file;
   Pc push_filename;
   B start_data;
-  struct E_srv_Z_http2_push *push;
-  N push_n;
 };
 struct E_srv_Z_http2_accept
 { int poll_fd;
@@ -459,8 +457,6 @@ D( srv, srv )
                         W( stream->buf_headers );
                     if( stream->buf_post )
                         W( stream->buf_post );
-                    if( stream->push )
-                        W( stream->push );
                 }
                 E_mem_Q_tab_W( E_srv_S_http2_accept[i].stream );
                 W( E_srv_S_http2_accept[i].buf_2 );
@@ -1668,11 +1664,11 @@ End_1:      if( E_srv_S_accept[i].ssl )
                 || stream->send_window_size <= 0
                 )
                     continue;
+                G_(); Gd( stream_id + 1 );
                 N send_frame_size_max = J_min( stream->send_window_size, E_srv_S_http2_accept[i].send_frame_size_max );
                 N l = 0;
                 N l_;
-                O{  G_(); Gd( send_frame_size_max ); Gd(l); Gd( send_frame_size_max - l );
-                    VO1( l_ = read( stream->file, E_srv_S_http2_accept[i].buf_2 + 9 + l, send_frame_size_max - l ))
+                O{  VO1( l_ = read( stream->file, E_srv_S_http2_accept[i].buf_2 + 9 + l, send_frame_size_max - l ))
                     {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
                         goto End2_2;
                     }
@@ -1725,81 +1721,32 @@ End_1:      if( E_srv_S_accept[i].ssl )
                             }
                             E_http2_push_S_links_n = 0;
                             E_text_syntax_Q_state_I_parse( stream->push_file, E_http2_push_Z_syntax_html, &state, &state_n, &E_http2_push_I_entities_func_Z_html );
-                            if( ~E_http2_push_I_parse_links( E_http2_header_R_header( stream->headers, stream->headers_n, ":path" ), E_http2_header_R_header( stream->headers, stream->headers_n, ":authority" ))
+                            Pc authority = E_http2_header_R_header( stream->headers, stream->headers_n, ":authority" );
+                            Pc s = E_text_Z_s0_R_c_search( authority, ':' );
+                            if( ~E_http2_push_I_parse_links( E_http2_header_R_header( stream->headers, stream->headers_n, ":path" ), authority, !*s ? "443" : 0 )
                             && E_http2_push_S_links_n
                             )
-                            {   Mt_( stream->push, 0 );
-                                if( !stream->push )
-                                {   for_n( k, E_http2_push_S_links_n )
-                                        W( E_http2_push_S_links[k] );
-                                    W( E_http2_push_S_links );
-                                    E_text_syntax_Q_state_W( state, state_n );
-                                    E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
-                                    goto End2_2;
-                                }
-                                stream->push_n = 0;
-                                E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
+                            {   E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
                                 for_n( headers_i, stream->headers_n )
                                     if( E_text_Z_s0_T_s0_starts_case( stream->headers[ headers_i ], ":path: " ))
                                         break;
                                 N l_old;
                                 N l_new = E_text_Z_s0_R_l( stream->headers[ headers_i ] ) - 7;
-                                for_n( k, E_http2_push_S_links_n )
-                                {   G_(); Gs0( E_http2_push_S_links[k] );
-                                    l_old = l_new;
-                                    l_new = E_text_Z_s0_R_l( E_http2_push_S_links[k] );
-                                    if( l_old > l_new )
-                                    {   if( !E_mem_Q_blk_I_remove( &stream->headers[ headers_i ], 7 + l_new, l_old - l_new ))
-                                        {   for( ; k != E_http2_push_S_links_n; k++ )
-                                                W( E_http2_push_S_links[k] );
-                                            break;
-                                        }
-                                    }else if( l_old < l_new )
-                                        if( !E_mem_Q_blk_I_insert( &stream->headers[ headers_i ], 7 + l_old, l_new - l_old ))
-                                        {   for( ; k != E_http2_push_S_links_n; k++ )
-                                                W( E_http2_push_S_links[k] );
-                                            break;
-                                        }
-                                    E_text_Z_s_P_s0_copy( stream->headers[ headers_i ] + 7, E_http2_push_S_links[k] );
-                                    Pc p = E_srv_S_http2_accept[i].buf_2_;
-                                    E_srv_S_http2_accept[i].buf_2_ += 9 + 4;
-                                    if( !~E_http2_header_I_write( &E_srv_S_http2_accept[i].buf_2_, stream->headers, stream->headers_n, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max, &E_srv_S_http2_accept[i].send_dynamic_table_size_max_hit ))
-                                    {   for( ; k != E_http2_push_S_links_n; k++ )
-                                            W( E_http2_push_S_links[k] );
-                                        W( E_http2_push_S_links );
-                                        E_text_syntax_Q_state_W( state, state_n );
-                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
-                                        goto End2_2;
-                                    }
-                                    I push_stream_id = E_mem_Q_tab_I_add( E_srv_S_http2_accept[i].stream );
-                                    stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
-                                    if( !~push_stream_id )
-                                    {   for( ; k != E_http2_push_S_links_n; k++ )
-                                            W( E_http2_push_S_links[k] );
-                                        break;
-                                    }
-                                    if( push_stream_id + 1 > E_srv_S_http2_accept[i].concurrent_streams_max )
-                                    {   E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, stream->push[k].stream_id );
-                                        stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
-                                        for( ; k != E_http2_push_S_links_n; k++ )
-                                            W( E_http2_push_S_links[k] );
-                                        break;
-                                    }
-                                    if( !E_mem_Q_blk_I_append( &stream->push, 1 ))
-                                    {   for( ; k != E_http2_push_S_links_n; k++ )
-                                            W( E_http2_push_S_links[k] );
-                                        W( E_http2_push_S_links );
-                                        E_text_syntax_Q_state_W( state, state_n );
-                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
-                                        goto End2_2;
-                                    }
-                                    stream->push_n++;
-                                    stream->push[ stream->push_n - 1 ].stream_id = push_stream_id;
-                                    W( E_http2_push_S_links[k] );
-                                    E_http2_srv_I_write_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_push_promise, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_end_headers, stream_id + 1 );                                    
-                                    E_http2_srv_I_write_n( &p, stream->push[ stream->push_n - 1 ].stream_id + 1, 4 );
-                                    if( !~E_reply_I_data( E_srv_S_http2_accept[i].ssl, E_srv_S_http2_accept[i].listen_sock, E_srv_S_http2_accept[i].buf_2, E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 ))
-                                    {   for( k++; k != E_http2_push_S_links_n; k++ )
+                                for_n( j, E_srv_S_srv_n )
+                                {   for_n( k, E_srv_S_srv[j].sfd_n )
+                                        if( E_srv_S_srv[j].sfd[k] == E_srv_S_http2_accept[i].poll_fd )
+                                            goto End3;
+                                }
+End3:                           ;
+                                N16 port = 443;
+                                B port_found = no;
+                                if( *s )
+                                {   port_found = yes;
+                                    *s = '\0';
+                                    Pc s_;
+                                    port = E_text_Z_s0_N_n10( s + 1, &s_ );
+                                    if( *s_ )
+                                    {   for_n( k, E_http2_push_S_links_n )
                                             W( E_http2_push_S_links[k] );
                                         W( E_http2_push_S_links );
                                         E_text_syntax_Q_state_W( state, state_n );
@@ -1807,10 +1754,280 @@ End_1:      if( E_srv_S_accept[i].ssl )
                                         goto End2_2;
                                     }
                                 }
-                                // Tymczasowo.
-                                for_n_( k, stream->push_n )
-                                {   E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, stream->push[k].stream_id );
+                                for_n( k, E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost_n )
+                                    if( port == E_conf_S_bind[ E_srv_S_srv[j].bind_i ].port
+                                    && E_text_Z_s0_T_s0_eq_case( authority, E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost[k].host )
+                                    )
+                                        break;
+                                if( port_found )
+                                    *s = ':';
+                                for_n( m, E_http2_push_S_links_n )
+                                {   l_old = l_new;
+                                    l_new = E_text_Z_s0_R_l( E_http2_push_S_links[m] );
+                                    if( l_old > l_new )
+                                    {   if( !E_mem_Q_blk_I_remove( &stream->headers[ headers_i ], 7 + l_new, l_old - l_new ))
+                                        {   for( ; m != E_http2_push_S_links_n; m++ )
+                                                W( E_http2_push_S_links[m] );
+                                            break;
+                                        }
+                                    }else if( l_old < l_new )
+                                        if( !E_mem_Q_blk_I_insert( &stream->headers[ headers_i ], 7 + l_old, l_new - l_old ))
+                                        {   for( ; m != E_http2_push_S_links_n; m++ )
+                                                W( E_http2_push_S_links[m] );
+                                            break;
+                                        }
+                                    E_text_Z_s_P_s0_copy( stream->headers[ headers_i ] + 7, E_http2_push_S_links[m] );
+                                    I push_stream_id = E_mem_Q_tab_I_add( E_srv_S_http2_accept[i].stream );
                                     stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
+                                    if( !~push_stream_id )
+                                    {   for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        break;
+                                    }
+                                    if( push_stream_id + 1 > E_srv_S_http2_accept[i].concurrent_streams_max )
+                                    {   E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, push_stream_id );
+                                        stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
+                                        for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        break;
+                                    }
+                                    if( !E_mem_Q_blk_I_prepend( &E_http2_push_S_links[m], E_text_Z_s0_R_l( E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost[k].root_path )))
+                                    {   for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        W( E_http2_push_S_links );
+                                        E_text_syntax_Q_state_W( state, state_n );
+                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                        goto End2_2;
+                                    }
+                                    E_text_Z_s_P_s0_copy( E_http2_push_S_links[m], E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost[k].root_path );
+                                    struct E_srv_Z_http2_stream *push_stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, push_stream_id );
+                                    B gz = no;
+                                    Pc h = E_http2_header_R_header( stream->headers, stream->headers_n, "Accept-Encoding" );
+                                    if(h)
+                                        if( E_text_Z_s0_R_s0_search( h, "gzip" ))
+                                            gz = yes;
+                                    if(gz)
+                                    {   Pc s = E_mem_Q_blk_I_append( &E_http2_push_S_links[m], 3 );
+                                        if( !s )
+                                        {   for( ; m != E_http2_push_S_links_n; m++ )
+                                                W( E_http2_push_S_links[m] );
+                                            W( E_http2_push_S_links );
+                                            E_text_syntax_Q_state_W( state, state_n );
+                                            E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                            goto End2_2;
+                                        }
+                                        E_text_Z_s_P_s0_copy_0( s - 1, ".gz" );
+                                        V1( push_stream->file = open( E_http2_push_S_links[m], O_RDONLY ))
+                                        {   *( s - 1 ) = '\0';
+                                            V1( push_stream->file = open( E_http2_push_S_links[m], O_RDONLY ))
+                                            {   E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, push_stream_id );
+                                                stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
+                                                continue;
+                                            }
+                                            gz = no;
+                                        }
+                                    }else
+                                    {   V1( push_stream->file = open( E_http2_push_S_links[m], O_RDONLY ))
+                                        {   E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, push_stream_id );
+                                            stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
+                                            continue;
+                                        }
+                                    }
+                                    push_stream->buf_headers = 0;
+                                    push_stream->buf_post = 0;
+                                    push_stream->recv_window_size = E_srv_S_http2_accept[i].recv_window_size;
+                                    push_stream->send_window_size = E_srv_S_http2_accept[i].send_window_size;
+                                    push_stream->push_file = ~0;
+                                    push_stream->start_data = no;
+                                    Mt_( push_stream->headers, 0 );
+                                    if( !push_stream->headers )
+                                    {   for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        W( E_http2_push_S_links );
+                                        E_text_syntax_Q_state_W( state, state_n );
+                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                        goto End2_2;
+                                    }
+                                    push_stream->headers_n = 0;
+                                    G_(); Gd( stream_id + 1 ); Gd( push_stream_id + 1 ); Gs0( E_http2_push_S_links[m] );
+                                    /// Ramka “promise”.
+                                    Pc p = E_srv_S_http2_accept[i].buf_2_;
+                                    E_srv_S_http2_accept[i].buf_2_ += 9 + 4;
+                                    if( !~E_http2_header_I_write( &E_srv_S_http2_accept[i].buf_2_, stream->headers, stream->headers_n, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max, &E_srv_S_http2_accept[i].send_dynamic_table_size_max_hit ))
+                                    {   for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        W( E_http2_push_S_links );
+                                        E_text_syntax_Q_state_W( state, state_n );
+                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                        goto End2_2;
+                                    }
+                                    E_http2_srv_I_write_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_push_promise, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_end_headers, stream_id + 1 );                                    
+                                    E_http2_srv_I_write_n( &p, push_stream_id + 1, 4 );
+                                    /// Ramka “headers".
+                                    N headers_n = 3;
+                                    Pc *Mt_( headers, headers_n );
+                                    if( !headers )
+                                    {   for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        W( E_http2_push_S_links );
+                                        E_text_syntax_Q_state_W( state, state_n );
+                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                        goto End2_2;
+                                    }
+                                    N headers_i = 0;
+                                    headers[ headers_i ] = M(13);
+                                    if( !headers[ headers_i ] )
+                                    {   for_n( headers_i, headers_n )
+                                            W( headers[ headers_i ] );
+                                        W(headers);
+                                        for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        W( E_http2_push_S_links );
+                                        E_text_syntax_Q_state_W( state, state_n );
+                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                        goto End2_2;
+                                    }
+                                    E_text_Z_s_P_s0_copy_0( headers[ headers_i ], ":status: 200" );
+                                    headers_i++;
+                                    headers[ headers_i ] = M( 8 + E_text_Z_s0_R_l( S_server_name ) + 1 );
+                                    if( !headers[ headers_i ] )
+                                    {   for_n( headers_i, headers_n )
+                                            W( headers[ headers_i ] );
+                                        W(headers);
+                                        for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        W( E_http2_push_S_links );
+                                        E_text_syntax_Q_state_W( state, state_n );
+                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                        goto End2_2;
+                                    }
+                                    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( headers[ headers_i ], "Server: " ), S_server_name );
+                                    if(gz)
+                                    {   headers_i++;
+                                        if( !( E_mem_Q_blk_I_append( &headers, 1 )))
+                                        {   for_n( headers_i, headers_n )
+                                                W( headers[ headers_i ] );
+                                            W(headers);
+                                            for( ; m != E_http2_push_S_links_n; m++ )
+                                                W( E_http2_push_S_links[m] );
+                                            W( E_http2_push_S_links );
+                                            E_text_syntax_Q_state_W( state, state_n );
+                                            E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                            goto End2_2;
+                                        }
+                                        headers_n++;
+                                        headers[ headers_i ] = M( 22 + 1 );
+                                        if( !headers[ headers_i ] )
+                                        {   for_n( headers_i, headers_n )
+                                                W( headers[ headers_i ] );
+                                            W(headers);
+                                            for( ; m != E_http2_push_S_links_n; m++ )
+                                                W( E_http2_push_S_links[m] );
+                                            W( E_http2_push_S_links );
+                                            E_text_syntax_Q_state_W( state, state_n );
+                                            E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                            goto End2_2;
+                                        }
+                                        E_text_Z_s_P_s0_copy_0( headers[ headers_i ], "Content-Encoding: gzip" );
+                                    }
+                                    headers_i++;
+                                    struct stat stat;
+                                    V0( fstat( push_stream->file, &stat ))
+                                    {   for_n( headers_i, headers_n )
+                                            W( headers[ headers_i ] );
+                                        W(headers);
+                                        for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        W( E_http2_push_S_links );
+                                        E_text_syntax_Q_state_W( state, state_n );
+                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                        goto End2_2;
+                                    }
+                                    push_stream->file_size = stat.st_size;
+                                    l = E_text_Z_n_N_s_G( stat.st_size, sizeof( stat.st_size ), 10 );
+                                    s = M(l);
+                                    if( !s )
+                                    {   for_n( headers_i, headers_n )
+                                            W( headers[ headers_i ] );
+                                        W(headers);
+                                        for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        W( E_http2_push_S_links );
+                                        E_text_syntax_Q_state_W( state, state_n );
+                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                        goto End2_2;
+                                    }
+                                    headers[ headers_i ] = M( 16 + l + 1 );
+                                    if( !headers[ headers_i ] )
+                                    {   for_n( headers_i, headers_n )
+                                            W( headers[ headers_i ] );
+                                        W(headers);
+                                        for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        W( E_http2_push_S_links );
+                                        E_text_syntax_Q_state_W( state, state_n );
+                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                        goto End2_2;
+                                    }
+                                    E_text_Z_n_N_s( s + l, stat.st_size, sizeof( stat.st_size ), 10 );
+                                    E_text_Z_s_P_s_copy_0( E_text_Z_s_P_s0_copy( headers[ headers_i ], "Content-Length: " ), s, s + l );
+                                    W(s);
+                                    N cookie_i = 0;
+                                    while( h = E_http2_header_R_header_n( stream->headers, stream->headers_n, "Cookie", cookie_i++ ))
+                                    {   if( !( E_mem_Q_blk_I_append( &headers, 1 )))
+                                        {   for_n( headers_i, headers_n )
+                                                W( headers[ headers_i ] );
+                                            W(headers);
+                                            for( ; m != E_http2_push_S_links_n; m++ )
+                                                W( E_http2_push_S_links[m] );
+                                            W( E_http2_push_S_links );
+                                            E_text_syntax_Q_state_W( state, state_n );
+                                            E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                            goto End2_2;
+                                        }
+                                        headers[ headers_n ] = M( 8 + E_text_Z_s0_R_l(h) + 1 );
+                                        if( !headers[ headers_n ] )
+                                        {   for_n( headers_i, headers_n )
+                                                W( headers[ headers_i ] );
+                                            W(headers);
+                                            for( ; m != E_http2_push_S_links_n; m++ )
+                                                W( E_http2_push_S_links[m] );
+                                            W( E_http2_push_S_links );
+                                            E_text_syntax_Q_state_W( state, state_n );
+                                            E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                            goto End2_2;
+                                        }
+                                        E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( headers[ headers_n ], "Cookie: " ), h );
+                                        headers_n++;
+                                    }
+                                    for_n_( headers_i, headers_n )
+                                    {   G_(); Gs0( headers[ headers_i ] );
+                                    }
+                                    p = E_srv_S_http2_accept[i].buf_2_;
+                                    E_srv_S_http2_accept[i].buf_2_ += 9;
+                                    if( !~E_http2_header_I_write( &E_srv_S_http2_accept[i].buf_2_, headers, headers_n, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max, &E_srv_S_http2_accept[i].send_dynamic_table_size_max_hit ))
+                                    {   for_n( headers_i, headers_n )
+                                            W( headers[ headers_i ] );
+                                        W(headers);
+                                        for( ; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        W( E_http2_push_S_links );
+                                        E_text_syntax_Q_state_W( state, state_n );
+                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                        goto End2_2;
+                                    }
+                                    for_n_( headers_i, headers_n )
+                                        W( headers[ headers_i ] );
+                                    W(headers);
+                                    E_http2_srv_I_write_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers, push_stream_id + 1 );
+                                    if( !~E_reply_I_data( E_srv_S_http2_accept[i].ssl, E_srv_S_http2_accept[i].listen_sock, E_srv_S_http2_accept[i].buf_2, E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 ))
+                                    {   for( m++; m != E_http2_push_S_links_n; m++ )
+                                            W( E_http2_push_S_links[m] );
+                                        W( E_http2_push_S_links );
+                                        E_text_syntax_Q_state_W( state, state_n );
+                                        E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                        goto End2_2;
+                                    }
                                 }
                             }
                             W( E_http2_push_S_links );
@@ -1996,7 +2213,6 @@ End2:       if( E_srv_S_http2_accept[i].preface )
                         stream->send_window_size = E_srv_S_http2_accept[i].send_window_size;
                         stream->push_file = ~0;
                         stream->start_data = no;
-                        stream->push = 0;
                         Mt_( stream->headers, 0 );
                         if( !stream->headers )
                         {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
@@ -2069,7 +2285,6 @@ Http2_srv:                      ;
                                         goto End2_3;
                                     }
                                 }
-                                G_(); Gd(port); Gs0(authority);
                                 for_n( k, E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost_n )
                                     if( port == E_conf_S_bind[ E_srv_S_srv[j].bind_i ].port
                                     && E_text_Z_s0_T_s0_eq_case( authority, E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost[k].host )
@@ -2792,81 +3007,32 @@ Http2_srv:                      ;
                                                     }
                                                     E_http2_push_S_links_n = 0;
                                                     E_text_syntax_Q_state_I_parse( stream->push_file, E_http2_push_Z_syntax_html, &state, &state_n, &E_http2_push_I_entities_func_Z_html );
-                                                    if( ~E_http2_push_I_parse_links( E_http2_header_R_header( stream->headers, stream->headers_n, ":path" ), E_http2_header_R_header( stream->headers, stream->headers_n, ":authority" ))
+                                                    Pc authority = E_http2_header_R_header( stream->headers, stream->headers_n, ":authority" );
+                                                    Pc s = E_text_Z_s0_R_c_search( authority, ':' );
+                                                    if( ~E_http2_push_I_parse_links( E_http2_header_R_header( stream->headers, stream->headers_n, ":path" ), authority, !*s ? "443" : 0 )
                                                     && E_http2_push_S_links_n
                                                     )
-                                                    {   Mt_( stream->push, 0 );
-                                                        if( !stream->push )
-                                                        {   for_n( k, E_http2_push_S_links_n )
-                                                                W( E_http2_push_S_links[k] );
-                                                            W( E_http2_push_S_links );
-                                                            E_text_syntax_Q_state_W( state, state_n );
-                                                            E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
-                                                            goto End2_2;
-                                                        }
-                                                        stream->push_n = 0;
-                                                        E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
+                                                    {   E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
                                                         for_n( headers_i, stream->headers_n )
                                                             if( E_text_Z_s0_T_s0_starts_case( stream->headers[ headers_i ], ":path: " ))
                                                                 break;
                                                         N l_old;
                                                         N l_new = E_text_Z_s0_R_l( stream->headers[ headers_i ] ) - 7;
-                                                        for_n( k, E_http2_push_S_links_n )
-                                                        {   G_(); Gs0( E_http2_push_S_links[k] );
-                                                            l_old = l_new;
-                                                            l_new = E_text_Z_s0_R_l( E_http2_push_S_links[k] );
-                                                            if( l_old > l_new )
-                                                            {   if( !E_mem_Q_blk_I_remove( &stream->headers[ headers_i ], 7 + l_new, l_old - l_new ))
-                                                                {   for( ; k != E_http2_push_S_links_n; k++ )
-                                                                        W( E_http2_push_S_links[k] );
-                                                                    break;
-                                                                }
-                                                            }else if( l_old < l_new )
-                                                                if( !E_mem_Q_blk_I_insert( &stream->headers[ headers_i ], 7 + l_old, l_new - l_old ))
-                                                                {   for( ; k != E_http2_push_S_links_n; k++ )
-                                                                        W( E_http2_push_S_links[k] );
-                                                                    break;
-                                                                }
-                                                            E_text_Z_s_P_s0_copy( stream->headers[ headers_i ] + 7, E_http2_push_S_links[k] );
-                                                            Pc p = E_srv_S_http2_accept[i].buf_2_;
-                                                            E_srv_S_http2_accept[i].buf_2_ += 9 + 4;
-                                                            if( !~E_http2_header_I_write( &E_srv_S_http2_accept[i].buf_2_, stream->headers, stream->headers_n, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max, &E_srv_S_http2_accept[i].send_dynamic_table_size_max_hit ))
-                                                            {   for( ; k != E_http2_push_S_links_n; k++ )
-                                                                    W( E_http2_push_S_links[k] );
-                                                                W( E_http2_push_S_links );
-                                                                E_text_syntax_Q_state_W( state, state_n );
-                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
-                                                                goto End2_2;
-                                                            }
-                                                            I push_stream_id = E_mem_Q_tab_I_add( E_srv_S_http2_accept[i].stream );
-                                                            stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
-                                                            if( !~push_stream_id )
-                                                            {   for( ; k != E_http2_push_S_links_n; k++ )
-                                                                    W( E_http2_push_S_links[k] );
-                                                                break;
-                                                            }
-                                                            if( push_stream_id + 1 > E_srv_S_http2_accept[i].concurrent_streams_max )
-                                                            {   E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, stream->push[k].stream_id );
-                                                                stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
-                                                                for( ; k != E_http2_push_S_links_n; k++ )
-                                                                    W( E_http2_push_S_links[k] );
-                                                                break;
-                                                            }
-                                                            if( !E_mem_Q_blk_I_append( &stream->push, 1 ))
-                                                            {   for( ; k != E_http2_push_S_links_n; k++ )
-                                                                    W( E_http2_push_S_links[k] );
-                                                                W( E_http2_push_S_links );
-                                                                E_text_syntax_Q_state_W( state, state_n );
-                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
-                                                                goto End2_2;
-                                                            }
-                                                            stream->push_n++;
-                                                            stream->push[ stream->push_n - 1 ].stream_id = push_stream_id;
-                                                            W( E_http2_push_S_links[k] );
-                                                            E_http2_srv_I_write_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_push_promise, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_end_headers, stream_id + 1 );                                    
-                                                            E_http2_srv_I_write_n( &p, stream->push[ stream->push_n - 1 ].stream_id + 1, 4 );
-                                                            if( !~E_reply_I_data( E_srv_S_http2_accept[i].ssl, E_srv_S_http2_accept[i].listen_sock, E_srv_S_http2_accept[i].buf_2, E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 ))
-                                                            {   for( k++; k != E_http2_push_S_links_n; k++ )
+                                                        for_n( j, E_srv_S_srv_n )
+                                                        {   for_n( k, E_srv_S_srv[j].sfd_n )
+                                                                if( E_srv_S_srv[j].sfd[k] == E_srv_S_http2_accept[i].poll_fd )
+                                                                    goto End4;
+                                                        }
+End4:                                                   ;
+                                                        N16 port = 443;
+                                                        B port_found = no;
+                                                        if( *s )
+                                                        {   port_found = yes;
+                                                            *s = '\0';
+                                                            Pc s_;
+                                                            port = E_text_Z_s0_N_n10( s + 1, &s_ );
+                                                            if( *s_ )
+                                                            {   for_n( k, E_http2_push_S_links_n )
                                                                     W( E_http2_push_S_links[k] );
                                                                 W( E_http2_push_S_links );
                                                                 E_text_syntax_Q_state_W( state, state_n );
@@ -2874,10 +3040,280 @@ Http2_srv:                      ;
                                                                 goto End2_2;
                                                             }
                                                         }
-                                                        // Tymczasowo.
-                                                        for_n_( k, stream->push_n )
-                                                        {   E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, stream->push[k].stream_id );
+                                                        for_n( k, E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost_n )
+                                                            if( port == E_conf_S_bind[ E_srv_S_srv[j].bind_i ].port
+                                                            && E_text_Z_s0_T_s0_eq_case( authority, E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost[k].host )
+                                                            )
+                                                                break;
+                                                        if( port_found )
+                                                            *s = ':';
+                                                        for_n( m, E_http2_push_S_links_n )
+                                                        {   l_old = l_new;
+                                                            l_new = E_text_Z_s0_R_l( E_http2_push_S_links[m] );
+                                                            if( l_old > l_new )
+                                                            {   if( !E_mem_Q_blk_I_remove( &stream->headers[ headers_i ], 7 + l_new, l_old - l_new ))
+                                                                {   for( ; m != E_http2_push_S_links_n; m++ )
+                                                                        W( E_http2_push_S_links[m] );
+                                                                    break;
+                                                                }
+                                                            }else if( l_old < l_new )
+                                                                if( !E_mem_Q_blk_I_insert( &stream->headers[ headers_i ], 7 + l_old, l_new - l_old ))
+                                                                {   for( ; m != E_http2_push_S_links_n; m++ )
+                                                                        W( E_http2_push_S_links[m] );
+                                                                    break;
+                                                                }
+                                                            E_text_Z_s_P_s0_copy( stream->headers[ headers_i ] + 7, E_http2_push_S_links[m] );
+                                                            I push_stream_id = E_mem_Q_tab_I_add( E_srv_S_http2_accept[i].stream );
                                                             stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
+                                                            if( !~push_stream_id )
+                                                            {   for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                break;
+                                                            }
+                                                            if( push_stream_id + 1 > E_srv_S_http2_accept[i].concurrent_streams_max )
+                                                            {   E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, push_stream_id );
+                                                                stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
+                                                                for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                break;
+                                                            }
+                                                            if( !E_mem_Q_blk_I_prepend( &E_http2_push_S_links[m], E_text_Z_s0_R_l( E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost[k].root_path )))
+                                                            {   for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                W( E_http2_push_S_links );
+                                                                E_text_syntax_Q_state_W( state, state_n );
+                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                goto End2_2;
+                                                            }
+                                                            E_text_Z_s_P_s0_copy( E_http2_push_S_links[m], E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost[k].root_path );
+                                                            struct E_srv_Z_http2_stream *push_stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, push_stream_id );
+                                                            B gz = no;
+                                                            Pc h = E_http2_header_R_header( stream->headers, stream->headers_n, "Accept-Encoding" );
+                                                            if(h)
+                                                                if( E_text_Z_s0_R_s0_search( h, "gzip" ))
+                                                                    gz = yes;
+                                                            if(gz)
+                                                            {   Pc s = E_mem_Q_blk_I_append( &E_http2_push_S_links[m], 3 );
+                                                                if( !s )
+                                                                {   for( ; m != E_http2_push_S_links_n; m++ )
+                                                                        W( E_http2_push_S_links[m] );
+                                                                    W( E_http2_push_S_links );
+                                                                    E_text_syntax_Q_state_W( state, state_n );
+                                                                    E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                    goto End2_2;
+                                                                }
+                                                                E_text_Z_s_P_s0_copy_0( s - 1, ".gz" );
+                                                                V1( push_stream->file = open( E_http2_push_S_links[m], O_RDONLY ))
+                                                                {   *( s - 1 ) = '\0';
+                                                                    V1( push_stream->file = open( E_http2_push_S_links[m], O_RDONLY ))
+                                                                    {   E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, push_stream_id );
+                                                                        stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
+                                                                        continue;
+                                                                    }
+                                                                    gz = no;
+                                                                }
+                                                            }else
+                                                            {   V1( push_stream->file = open( E_http2_push_S_links[m], O_RDONLY ))
+                                                                {   E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, push_stream_id );
+                                                                    stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
+                                                                    continue;
+                                                                }
+                                                            }
+                                                            push_stream->buf_headers = 0;
+                                                            push_stream->buf_post = 0;
+                                                            push_stream->recv_window_size = E_srv_S_http2_accept[i].recv_window_size;
+                                                            push_stream->send_window_size = E_srv_S_http2_accept[i].send_window_size;
+                                                            push_stream->push_file = ~0;
+                                                            push_stream->start_data = no;
+                                                            Mt_( push_stream->headers, 0 );
+                                                            if( !push_stream->headers )
+                                                            {   for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                W( E_http2_push_S_links );
+                                                                E_text_syntax_Q_state_W( state, state_n );
+                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                goto End2_2;
+                                                            }
+                                                            push_stream->headers_n = 0;
+                                                            G_(); Gd( stream_id + 1 ); Gd( push_stream_id + 1 ); Gs0( E_http2_push_S_links[m] );
+                                                            /// Ramka “promise”.
+                                                            Pc p = E_srv_S_http2_accept[i].buf_2_;
+                                                            E_srv_S_http2_accept[i].buf_2_ += 9 + 4;
+                                                            if( !~E_http2_header_I_write( &E_srv_S_http2_accept[i].buf_2_, stream->headers, stream->headers_n, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max, &E_srv_S_http2_accept[i].send_dynamic_table_size_max_hit ))
+                                                            {   for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                W( E_http2_push_S_links );
+                                                                E_text_syntax_Q_state_W( state, state_n );
+                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                goto End2_2;
+                                                            }
+                                                            E_http2_srv_I_write_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_push_promise, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_end_headers, stream_id + 1 );                                    
+                                                            E_http2_srv_I_write_n( &p, push_stream_id + 1, 4 );
+                                                            /// Ramka “headers".
+                                                            N headers_n = 3;
+                                                            Pc *Mt_( headers, headers_n );
+                                                            if( !headers )
+                                                            {   for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                W( E_http2_push_S_links );
+                                                                E_text_syntax_Q_state_W( state, state_n );
+                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                goto End2_2;
+                                                            }
+                                                            N headers_i = 0;
+                                                            headers[ headers_i ] = M(13);
+                                                            if( !headers[ headers_i ] )
+                                                            {   for_n( headers_i, headers_n )
+                                                                    W( headers[ headers_i ] );
+                                                                W(headers);
+                                                                for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                W( E_http2_push_S_links );
+                                                                E_text_syntax_Q_state_W( state, state_n );
+                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                goto End2_2;
+                                                            }
+                                                            E_text_Z_s_P_s0_copy_0( headers[ headers_i ], ":status: 200" );
+                                                            headers_i++;
+                                                            headers[ headers_i ] = M( 8 + E_text_Z_s0_R_l( S_server_name ) + 1 );
+                                                            if( !headers[ headers_i ] )
+                                                            {   for_n( headers_i, headers_n )
+                                                                    W( headers[ headers_i ] );
+                                                                W(headers);
+                                                                for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                W( E_http2_push_S_links );
+                                                                E_text_syntax_Q_state_W( state, state_n );
+                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                goto End2_2;
+                                                            }
+                                                            E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( headers[ headers_i ], "Server: " ), S_server_name );
+                                                            if(gz)
+                                                            {   headers_i++;
+                                                                if( !( E_mem_Q_blk_I_append( &headers, 1 )))
+                                                                {   for_n( headers_i, headers_n )
+                                                                        W( headers[ headers_i ] );
+                                                                    W(headers);
+                                                                    for( ; m != E_http2_push_S_links_n; m++ )
+                                                                        W( E_http2_push_S_links[m] );
+                                                                    W( E_http2_push_S_links );
+                                                                    E_text_syntax_Q_state_W( state, state_n );
+                                                                    E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                    goto End2_2;
+                                                                }
+                                                                headers_n++;
+                                                                headers[ headers_i ] = M( 22 + 1 );
+                                                                if( !headers[ headers_i ] )
+                                                                {   for_n( headers_i, headers_n )
+                                                                        W( headers[ headers_i ] );
+                                                                    W(headers);
+                                                                    for( ; m != E_http2_push_S_links_n; m++ )
+                                                                        W( E_http2_push_S_links[m] );
+                                                                    W( E_http2_push_S_links );
+                                                                    E_text_syntax_Q_state_W( state, state_n );
+                                                                    E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                    goto End2_2;
+                                                                }
+                                                                E_text_Z_s_P_s0_copy_0( headers[ headers_i ], "Content-Encoding: gzip" );
+                                                            }
+                                                            headers_i++;
+                                                            struct stat stat;
+                                                            V0( fstat( push_stream->file, &stat ))
+                                                            {   for_n( headers_i, headers_n )
+                                                                    W( headers[ headers_i ] );
+                                                                W(headers);
+                                                                for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                W( E_http2_push_S_links );
+                                                                E_text_syntax_Q_state_W( state, state_n );
+                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                goto End2_2;
+                                                            }
+                                                            push_stream->file_size = stat.st_size;
+                                                            l = E_text_Z_n_N_s_G( stat.st_size, sizeof( stat.st_size ), 10 );
+                                                            s = M(l);
+                                                            if( !s )
+                                                            {   for_n( headers_i, headers_n )
+                                                                    W( headers[ headers_i ] );
+                                                                W(headers);
+                                                                for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                W( E_http2_push_S_links );
+                                                                E_text_syntax_Q_state_W( state, state_n );
+                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                goto End2_2;
+                                                            }
+                                                            headers[ headers_i ] = M( 16 + l + 1 );
+                                                            if( !headers[ headers_i ] )
+                                                            {   for_n( headers_i, headers_n )
+                                                                    W( headers[ headers_i ] );
+                                                                W(headers);
+                                                                for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                W( E_http2_push_S_links );
+                                                                E_text_syntax_Q_state_W( state, state_n );
+                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                goto End2_2;
+                                                            }
+                                                            E_text_Z_n_N_s( s + l, stat.st_size, sizeof( stat.st_size ), 10 );
+                                                            E_text_Z_s_P_s_copy_0( E_text_Z_s_P_s0_copy( headers[ headers_i ], "Content-Length: " ), s, s + l );
+                                                            W(s);
+                                                            N cookie_i = 0;
+                                                            while( h = E_http2_header_R_header_n( stream->headers, stream->headers_n, "Cookie", cookie_i++ ))
+                                                            {   if( !( E_mem_Q_blk_I_append( &headers, 1 )))
+                                                                {   for_n( headers_i, headers_n )
+                                                                        W( headers[ headers_i ] );
+                                                                    W(headers);
+                                                                    for( ; m != E_http2_push_S_links_n; m++ )
+                                                                        W( E_http2_push_S_links[m] );
+                                                                    W( E_http2_push_S_links );
+                                                                    E_text_syntax_Q_state_W( state, state_n );
+                                                                    E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                    goto End2_2;
+                                                                }
+                                                                headers[ headers_n ] = M( 8 + E_text_Z_s0_R_l(h) + 1 );
+                                                                if( !headers[ headers_n ] )
+                                                                {   for_n( headers_i, headers_n )
+                                                                        W( headers[ headers_i ] );
+                                                                    W(headers);
+                                                                    for( ; m != E_http2_push_S_links_n; m++ )
+                                                                        W( E_http2_push_S_links[m] );
+                                                                    W( E_http2_push_S_links );
+                                                                    E_text_syntax_Q_state_W( state, state_n );
+                                                                    E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                    goto End2_2;
+                                                                }
+                                                                E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( headers[ headers_n ], "Cookie: " ), h );
+                                                                headers_n++;
+                                                            }
+                                                            for_n_( headers_i, headers_n )
+                                                            {   G_(); Gs0( headers[ headers_i ] );
+                                                            }
+                                                            p = E_srv_S_http2_accept[i].buf_2_;
+                                                            E_srv_S_http2_accept[i].buf_2_ += 9;
+                                                            if( !~E_http2_header_I_write( &E_srv_S_http2_accept[i].buf_2_, headers, headers_n, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max, &E_srv_S_http2_accept[i].send_dynamic_table_size_max_hit ))
+                                                            {   for_n( headers_i, headers_n )
+                                                                    W( headers[ headers_i ] );
+                                                                W(headers);
+                                                                for( ; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                W( E_http2_push_S_links );
+                                                                E_text_syntax_Q_state_W( state, state_n );
+                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                goto End2_2;
+                                                            }
+                                                            for_n_( headers_i, headers_n )
+                                                                W( headers[ headers_i ] );
+                                                            W(headers);
+                                                            E_http2_srv_I_write_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers, push_stream_id + 1 );
+                                                            if( !~E_reply_I_data( E_srv_S_http2_accept[i].ssl, E_srv_S_http2_accept[i].listen_sock, E_srv_S_http2_accept[i].buf_2, E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 ))
+                                                            {   for( m++; m != E_http2_push_S_links_n; m++ )
+                                                                    W( E_http2_push_S_links[m] );
+                                                                W( E_http2_push_S_links );
+                                                                E_text_syntax_Q_state_W( state, state_n );
+                                                                E_srv_S_goaway_error = E_srv_S_goaway_error_S_internal_error;
+                                                                goto End2_2;
+                                                            }
                                                         }
                                                     }
                                                     W( E_http2_push_S_links );
@@ -3103,7 +3539,7 @@ Http2_srv:                      ;
                     }
                   case E_http2_srv_Z_frame_type_S_rst_stream:
                     {   N error = E_http2_srv_I_read_n( &E_srv_S_http2_accept[i].buf_, 4 );
-                        G_(); Gd( frame_stream ); Gd(error);
+                        G_(); Gd( frame_stream ); Gd(error); Gd( E_mem_Q_tab_T( E_srv_S_http2_accept[i].stream, frame_stream - 1 ));
                         if( frame_stream - 1 >= (I)~0
                         || !E_mem_Q_tab_T( E_srv_S_http2_accept[i].stream, frame_stream - 1 )
                         )
@@ -3309,8 +3745,6 @@ End2_1:     ;
                     W( stream->buf_headers );
                 if( stream->buf_post )
                     W( stream->buf_post );
-                if( stream->push )
-                    W( stream->push );
             }
             E_mem_Q_tab_W( E_srv_S_http2_accept[i].stream );
             W( E_srv_S_http2_accept[i].buf_2 );
