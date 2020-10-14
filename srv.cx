@@ -1726,8 +1726,7 @@ End_1:      if( E_srv_S_accept[i].ssl )
                             if( ~E_http2_push_I_parse_links( E_http2_header_R_header( stream->headers, stream->headers_n, ":path" ), authority, !*s ? "443" : 0 )
                             && E_http2_push_S_links_n
                             )
-                            {   E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
-                                for_n( headers_i, stream->headers_n )
+                            {   for_n( headers_i, stream->headers_n )
                                     if( E_text_Z_s0_T_s0_starts_case( stream->headers[ headers_i ], ":path: " ))
                                         break;
                                 N l_old;
@@ -1762,7 +1761,8 @@ End3:                           ;
                                 if( port_found )
                                     *s = ':';
                                 for_n( m, E_http2_push_S_links_n )
-                                {   l_old = l_new;
+                                {   E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
+                                    l_old = l_new;
                                     l_new = E_text_Z_s0_R_l( E_http2_push_S_links[m] );
                                     if( l_old > l_new )
                                     {   if( !E_mem_Q_blk_I_remove( &stream->headers[ headers_i ], 7 + l_new, l_old - l_new ))
@@ -3012,8 +3012,7 @@ Http2_srv:                      ;
                                                     if( ~E_http2_push_I_parse_links( E_http2_header_R_header( stream->headers, stream->headers_n, ":path" ), authority, !*s ? "443" : 0 )
                                                     && E_http2_push_S_links_n
                                                     )
-                                                    {   E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
-                                                        for_n( headers_i, stream->headers_n )
+                                                    {   for_n( headers_i, stream->headers_n )
                                                             if( E_text_Z_s0_T_s0_starts_case( stream->headers[ headers_i ], ":path: " ))
                                                                 break;
                                                         N l_old;
@@ -3048,7 +3047,8 @@ End4:                                                   ;
                                                         if( port_found )
                                                             *s = ':';
                                                         for_n( m, E_http2_push_S_links_n )
-                                                        {   l_old = l_new;
+                                                        {   E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
+                                                            l_old = l_new;
                                                             l_new = E_text_Z_s0_R_l( E_http2_push_S_links[m] );
                                                             if( l_old > l_new )
                                                             {   if( !E_mem_Q_blk_I_remove( &stream->headers[ headers_i ], 7 + l_new, l_old - l_new ))
