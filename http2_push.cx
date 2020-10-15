@@ -40,17 +40,21 @@ E_http2_push_I_parse_links( Pc req_path
         {   if( !E_text_Z_s0_T_s0_starts_case( s, authority ))
             {   if( !E_mem_Q_blk_I_remove( &E_http2_push_S_links, links_i, 1 ))
                     return ~0;
+                E_http2_push_S_links_n--;
                 links_i--;
                 continue;
             }
             s += E_text_Z_s0_R_l(authority);
             if( *s != '/'
             || ( port
-              && (( !E_text_Z_s0_T_s0_starts( s, port ) && (( s += E_text_Z_s0_R_l(port) ), no ))
+              && ( *s != ':'
+                || !E_text_Z_s0_T_s0_starts( s + 1, port )
+                || (( s += 1 + E_text_Z_s0_R_l(port) ), no )
                 || *s != '/'
             )))
             {   if( !E_mem_Q_blk_I_remove( &E_http2_push_S_links, links_i, 1 ))
                     return ~0;
+                E_http2_push_S_links_n--;
                 links_i--;
                 continue;
             }
