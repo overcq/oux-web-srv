@@ -3,3 +3,4 @@ a.out
 *.c
 *.h
 !0.h
+E_cplus_S_cx_sources

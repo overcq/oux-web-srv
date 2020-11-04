@@ -89,7 +89,7 @@ root path
 host name
     "host"
 host
-    @ text
+    @text
 
 path
     "/", path entity
