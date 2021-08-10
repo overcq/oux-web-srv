@@ -219,14 +219,8 @@ E_srv_M( void
         }
         struct addrinfo *ai_1 = ai;
         do
-        {   struct sockaddr_in *sa;
-            struct sockaddr_in6 *sa6;
-            if( ai_1->ai_family == AF_INET )
-                sa = (P)ai_1->ai_addr;
-            else
-                sa6 = (P)ai_1->ai_addr;
-            int sfd;
-            V1( sfd = socket( ai_1->ai_family, SOCK_STREAM, 0 ))
+        {   int sfd;
+            V1( sfd = socket( ai_1->ai_family, ai_1->ai_socktype, ai_1->ai_protocol ))
             {   freeaddrinfo(ai);
                 E_srv_W();
                 return ~0;
@@ -238,7 +232,7 @@ E_srv_M( void
             }
             E_srv_S_srv[ E_srv_S_srv_n - 1 ].sfd_n++;
             E_srv_S_srv[ E_srv_S_srv_n - 1 ].sfd[ E_srv_S_srv[ E_srv_S_srv_n - 1 ].sfd_n - 1 ] = sfd;
-            V0( bind( sfd, ai_1->ai_addr, ai_1->ai_family == AF_INET ? sizeof( *sa ) : sizeof( *sa6 )))
+            V0( bind( sfd, ai_1->ai_addr, ai_1->ai_addrlen ))
             {   freeaddrinfo(ai);
                 E_srv_W();
                 return ~0;
@@ -1356,7 +1350,7 @@ End:            ;
                         {   V0_( close( STDIN_FILENO ));
                         }
                         environ[ environ_i ] = 0;
-                        J_assert( environ_i == environ_n - 1 );
+                        J_assert( environ_i + 1 == environ_n );
                         args[0].argc = 1;
                         args[0].argv = ( Pc[] ){ "php-cgi", 0 };
                         E_flow_I_fork_I_exec( 0, args, args_n );

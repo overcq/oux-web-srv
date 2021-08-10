@@ -8,12 +8,12 @@
 ################################################################################
 S_packages := libssl
 install:
-	{ $(CMP) /usr/bin/direct_oux /usr/bin/web-srv \
-	|| ln -f /usr/bin/direct_oux /usr/bin/web-srv; \
+	{ $(CMP) /usr/bin/direct-oux /usr/bin/web-srv \
+	|| ln -f /usr/bin/direct-oux /usr/bin/web-srv; \
 	} \
-	&& { $(CMP) a.out /usr/bin/indirect_web-srv \
-	|| $(INSTALL) -m 755 a.out /usr/bin/indirect_web-srv; \
+	&& { $(CMP) a.out /usr/bin/indirect-web-srv \
+	|| $(INSTALL) -m 755 a.out /usr/bin/indirect-web-srv; \
 	}
 uninstall:
-	$(RM) /usr/bin/indirect_web-srv /usr/bin/web-srv
+	$(RM) /usr/bin/indirect-web-srv /usr/bin/web-srv
 ################################################################################
