@@ -544,7 +544,7 @@ End_5:      ;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].recv_frame_size_max = 64 * 1024;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].send_frame_size_max = 16384;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].header_list_size_max = ~0;
-                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].buf = M( E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].recv_frame_size_max );
+                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].buf = M( 9 + E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].recv_frame_size_max );
                     if( !E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].buf )
                     {   SSL_shutdown( E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].ssl );
                         SSL_free( E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].ssl );
@@ -2107,6 +2107,7 @@ Next2_1:        FD_ZERO( &readfds );
                 }
                 G_(); Gd(i); Gs0_( "doczytano dane HTTP/2" ); Gd(l);
                 E_srv_S_http2_accept[i].buf_l += l;
+                G_(); Gd( E_srv_S_http2_accept[i].buf_l );
                 E_srv_S_http2_accept[i].buf_ = E_srv_S_http2_accept[i].buf;
             }
             for_n( j, E_srv_S_srv_n )
@@ -3551,7 +3552,7 @@ End4:                                                   ;
                         {   E_srv_S_goaway_error = E_srv_S_goaway_error_S_frame_size_error;
                             goto End2_2;
                         }
-                        E_srv_S_http2_accept[i].buf_2_ += frame_length;
+                        E_srv_S_http2_accept[i].buf_ += frame_length;
                         break;
                     }
                   case E_http2_srv_Z_frame_type_S_rst_stream:
