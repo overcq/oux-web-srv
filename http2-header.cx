@@ -553,7 +553,7 @@ E_http2_header_I_read( Pc *buffer
                 {   E_mem_Q_blk_I_remove( headers, --*headers_n, 1 );
                     return ~0;
                 }
-                E_text_Z_s_P_s0_copy_0( (*headers)[ *headers_n - 1 ], "Accept-Encoding: gzip, deflate" );
+                E_text_Z_s_P_s0_copy_0( (*headers)[ *headers_n - 1 ], "accept-encoding: gzip, deflate" );
             }else
             {   v -= E_http2_header_S_static_table_first_index;
                 if( v < sizeof( E_http2_header_S_static_table ) / sizeof( E_http2_header_S_static_table[0] ))
@@ -1088,7 +1088,7 @@ E_http2_header_I_write( Pc *buffer
                 if( E_text_Z_s0_T_s0_starts_case( headers[ headers_i ], s ))
                 {   W(s);
                     index = E_http2_header_S_static_table_first_index + i;
-                    if( index == 16 ) /// Accept-Encoding
+                    if( index == 16 ) // accept-encoding
                     {   if( E_text_Z_s0_T_s0_eq( headers[ headers_i ] + l, "gzip, deflate" ))
                             E_http2_header_I_write_v( buffer, 0x80, 7, index );
                         else
@@ -1112,9 +1112,9 @@ E_http2_header_I_write( Pc *buffer
                         }
                     }else
                     {   switch(index)
-                        { case 50: /// Range
-                          case 51: /// Referer
-                          case 55: /// Set-Cookie
+                        { case 50: // range
+                          case 51: // referer
+                          case 55: // set-cookie
                                 E_http2_header_I_write_v( buffer, 0, 4, index );
                                 break;
                           default:

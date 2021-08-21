@@ -46,7 +46,7 @@ E_http2_srv_I_read_n( Pc *buffer
 ){  N ret = 0;
     for_n( i, n )
     {   ret <<= 8;
-        ret |= **buffer & 0xff;
+        ret |= (N8)**buffer;
         (*buffer)++;
     }
     return ret;
