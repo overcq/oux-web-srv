@@ -40,17 +40,6 @@ enum E_http2_srv_Z_frame_type_setting
 , E_http2_srv_Z_frame_type_setting_Z_max_header_list_size
 };
 //==============================================================================
-void
-E_http2_srv_I_write_header( Pc *buffer
-, N frame_length
-, N frame_type
-, N frame_flags
-, N frame_stream
-){  E_net_http2_Q_buffer_I_write_n( buffer, frame_length, 3 );
-    E_net_http2_Q_buffer_I_write_n( buffer, frame_type, 1 );
-    E_net_http2_Q_buffer_I_write_n( buffer, frame_flags, 1 );
-    E_net_http2_Q_buffer_I_write_n( buffer, frame_stream, 4 );
-}
 N
 E_http2_srv_I_reply_code( N frame_stream
 , Pc *buffer
@@ -72,14 +61,14 @@ E_http2_srv_I_reply_code( N frame_stream
     E_text_Z_n_N_s( s + 3, code, sizeof(code), 10 );
     *( s + 3 ) = '\0';
     Pc buffer_ = *buffer + 9;
-    if( !~E_net_http2_Q_buffer_I_write( &buffer_, headers, 1, dynamic_table, dynamic_table_n, dynamic_table_size_max, dynamic_table_size_max_hit ))
+    if( !~E_net_http2_Q_buffer_I_write_headers( &buffer_, headers, 1, dynamic_table, dynamic_table_n, dynamic_table_size_max, dynamic_table_size_max_hit ))
     {   W( headers[0] );
         W(headers);
         return ~0;
     }
     W( headers[0] );
     W(headers);
-    E_http2_srv_I_write_header( buffer, buffer_ - 9 - *buffer, E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream | E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers, frame_stream );
+    E_net_http2_Q_buffer_I_write_frame_header( buffer, buffer_ - 9 - *buffer, E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream | E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers, frame_stream );
     *buffer = buffer_;
     return 0;
 }
