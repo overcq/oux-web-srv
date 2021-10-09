@@ -6,6 +6,8 @@
 *         server
 * ©overcq                on ‟Gentoo Linux 17.1” “x86_64”             2020‒4‒11 P
 *******************************************************************************/
+//TODO Wysyłać ramki “CONTINUATION” podczas wysyłania żądania, gdy przekroczono rozmiar graniczny.
+//==============================================================================
 #define S_server_name           "OUX/C+ web-srv"
 #define S_php_index_file        "index.php"
 #define S_html_index_file       "index.html"
@@ -254,7 +256,9 @@ E_srv_M( void
     {   for_n( k, E_srv_S_srv[j].sfd_n )
         {   ee.data.fd = E_srv_S_srv[j].sfd[k];
             V0( epoll_ctl( E_srv_S_epoll_fd, EPOLL_CTL_ADD, E_srv_S_srv[j].sfd[k], &ee ))
-            {   E_srv_W();
+            {   V0( close( E_srv_S_poll_pipe[0] )){}
+                V0( close( E_srv_S_poll_pipe[1] )){}
+                E_srv_W();
                 return ~0;
             }
             E_srv_S_ee_ready_n++;
@@ -511,7 +515,7 @@ End_5:      ;
                 if( e < 0 )
                 {   e = SSL_get_error( ssl, e );
                     if( e != SSL_ERROR_SYSCALL
-                    || e != SSL_ERROR_SSL
+                    && e != SSL_ERROR_SSL
                     )
                         SSL_shutdown(ssl);
                     SSL_free(ssl);
@@ -646,7 +650,7 @@ End_5:      ;
             G_(); Gd(j); Gs0_( "połączenie przyjęte" );
         }
             #ifdef __gnu_linux__
-        N ssl_ret;
+        S ssl_ret;
             #else
         int ssl_ret;
             #endif
@@ -927,7 +931,7 @@ End:            ;
                     )
                         break;
                 if( port_found )
-                
+
                     inheader.host.end = old_end;
                 if( k == E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost_n )
                 {   E_reply_I_code( E_srv_S_accept[i].ssl, E_srv_S_accept[i].listen_sock, 400, yes, http_11 );
@@ -1974,7 +1978,7 @@ End3:                           ;
                                         goaway_error = E_srv_Z_error_S_internal_error;
                                         goto End2_2;
                                     }
-                                    E_net_http2_Q_buffer_I_write_frame_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_push_promise, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_end_headers, stream_id + 1 );                                    
+                                    E_net_http2_Q_buffer_I_write_frame_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_push_promise, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_end_headers, stream_id + 1 );
                                     E_net_http2_Q_buffer_I_write_n( &p, push_stream_id + 1, 4 );
                                     // Ramka “headers".
                                     N headers_n = 3;
@@ -2039,6 +2043,8 @@ End3:                           ;
                                                 W( headers[ headers_i ] );
                                             W(headers);
                                             for( ; m != E_http2_push_S_links_n; m++ )
+
+
                                                 W( E_http2_push_S_links[m] );
                                             W( E_http2_push_S_links );
                                             E_text_syntax_Q_state_W( state, state_n );
@@ -2179,6 +2185,10 @@ End3:                           ;
                     E_srv_S_http2_accept[i].buf_2_ = E_srv_S_http2_accept[i].buf_2;
                     E_net_http2_Q_buffer_I_write_frame_header( &E_srv_S_http2_accept[i].buf_2_, 4, E_http2_srv_Z_frame_type_S_rst_stream, 0, stream_id + 1 );
                     E_net_http2_Q_buffer_I_write_n( &E_srv_S_http2_accept[i].buf_2_, E_srv_Z_error_S_no_error, 4 );
+                    if(( ssl_ret = E_net_cli_I_write_data( E_srv_S_http2_accept[i].ssl, E_srv_S_http2_accept[i].listen_sock, E_srv_S_http2_accept[i].buf_2, E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 )) != E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 )
+                    {   E_mem_Q_tab_Q_iter_W( E_srv_S_http2_accept[i].stream, iter );
+                        goto End2_1;
+                    }
                 }
             }
             fd_set readfds;
@@ -2221,7 +2231,6 @@ Next2:      FD_ZERO( &readfds );
                     goto End2_1;
                 E_srv_S_http2_accept[i].buf_l = ssl_ret;
                 G_(); Gd(i); Gs0_( "odczytano dane HTTP/2" ); Gd( E_srv_S_http2_accept[i].buf_l );
-                E_srv_S_http2_accept[i].buf_ = E_srv_S_http2_accept[i].buf;
             }else
             {   if( E_srv_S_http2_accept[i].buf != E_srv_S_http2_accept[i].buf_ )
                     E_mem_Q_blk_I_copy( E_srv_S_http2_accept[i].buf, E_srv_S_http2_accept[i].buf_, E_srv_S_http2_accept[i].buf + E_srv_S_http2_accept[i].buf_l - E_srv_S_http2_accept[i].buf_ );
@@ -2229,14 +2238,12 @@ Next2:      FD_ZERO( &readfds );
                 N l;
                 if(( ssl_ret = E_net_cli_I_read_data( E_srv_S_http2_accept[i].ssl, ~0, E_srv_S_http2_accept[i].buf + E_srv_S_http2_accept[i].buf_l, 9 + E_srv_S_http2_accept[i].recv_frame_size_max - E_srv_S_http2_accept[i].buf_l )) <= 0 )
                     goto End2_1;
-                E_srv_S_http2_accept[i].buf_l = ssl_ret;
-                    goto End2_1;
                 l = ssl_ret;
                 G_(); Gd(i); Gs0_( "doczytano dane HTTP/2" ); Gd(l);
                 E_srv_S_http2_accept[i].buf_l += l;
                 G_(); Gd( E_srv_S_http2_accept[i].buf_l );
-                E_srv_S_http2_accept[i].buf_ = E_srv_S_http2_accept[i].buf;
             }
+            E_srv_S_http2_accept[i].buf_ = E_srv_S_http2_accept[i].buf;
             for_n( j, E_srv_S_srv_n )
             {   for_n( k, E_srv_S_srv[j].sfd_n )
                     if( E_srv_S_srv[j].sfd[k] == E_srv_S_http2_accept[i].poll_fd )
@@ -2261,9 +2268,9 @@ End2:       if( E_srv_S_http2_accept[i].preface )
                 if(( ssl_ret = E_net_cli_I_write_data( E_srv_S_http2_accept[i].ssl, E_srv_S_http2_accept[i].listen_sock, E_srv_S_http2_accept[i].buf_2, E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 )) != E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 )
                     goto End2_1;
                 E_srv_S_http2_accept[i].preface = no;
+                if( E_srv_S_http2_accept[i].buf_ == E_srv_S_http2_accept[i].buf + E_srv_S_http2_accept[i].buf_l )
+                    goto Next2;
             }
-            if( E_srv_S_http2_accept[i].buf_ == E_srv_S_http2_accept[i].buf + E_srv_S_http2_accept[i].buf_l )
-                goto Next2;
             O{  if( E_srv_S_http2_accept[i].buf_ + 9 > E_srv_S_http2_accept[i].buf + E_srv_S_http2_accept[i].buf_l )
                     break;
                 N frame_length = E_net_http2_Q_buffer_I_read_n( &E_srv_S_http2_accept[i].buf_, 3 );
@@ -3339,7 +3346,7 @@ End4:                                                   ;
                                                                 goaway_error = E_srv_Z_error_S_internal_error;
                                                                 goto End2_2;
                                                             }
-                                                            E_net_http2_Q_buffer_I_write_frame_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_push_promise, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_end_headers, stream_id + 1 );                                    
+                                                            E_net_http2_Q_buffer_I_write_frame_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_push_promise, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_end_headers, stream_id + 1 );
                                                             E_net_http2_Q_buffer_I_write_n( &p, push_stream_id + 1, 4 );
                                                             // Ramka “headers".
                                                             N headers_n = 3;
@@ -3818,7 +3825,7 @@ End4:                                                   ;
                         }
                         N error = E_net_http2_Q_buffer_I_read_n( &E_srv_S_http2_accept[i].buf_, 4 );
                         G_(); Gd( frame_stream ); Gd(error);
-                        if( !frame_stream 
+                        if( !frame_stream
                         || frame_stream - 1 >= (I)~0
                         || !E_mem_Q_tab_T( E_srv_S_http2_accept[i].stream, frame_stream - 1 )
                         )
@@ -4028,7 +4035,6 @@ End2_1:     e = SSL_get_error( E_srv_S_http2_accept[i].ssl, ssl_ret );
                     W( stream->z_stream );
                     W( stream->zlib_data );
                 }
-                
             }
             E_mem_Q_tab_W( E_srv_S_http2_accept[i].stream );
             W( E_srv_S_http2_accept[i].buf_2 );
