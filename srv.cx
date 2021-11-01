@@ -402,7 +402,8 @@ E_srv_D_srv_I_unblock( P p
     VO1_( write( E_srv_S_poll_pipe[1], &c, sizeof(C) ));
 }
 D( srv, srv )
-{   Xh_A( E_srv_D_srv_I_unblock );
+{   Dh_();
+    Xh_A( E_srv_D_srv_I_unblock );
     I_D
     {   N n;
         Xh_B_();
