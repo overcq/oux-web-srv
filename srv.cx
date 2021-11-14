@@ -160,7 +160,11 @@ E_srv_M( void
         #endif
     for_n( i, E_conf_S_bind_n )
     {   if( !E_mem_Q_blk_I_append( &E_srv_S_srv, 1 ))
-        {   E_srv_W();
+        {
+                #ifdef __gnu_linux__
+            V0( close( E_srv_S_epoll_fd )){}
+                #endif
+            E_srv_W();
             return ~0;
         }
         E_srv_S_srv_n++;
@@ -182,7 +186,11 @@ E_srv_M( void
             || SSL_CTX_use_certificate_file( E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx, E_conf_S_bind[i].certificate_path, SSL_FILETYPE_PEM ) != 1
             || SSL_CTX_use_PrivateKey_file( E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx, E_conf_S_bind[i].private_key_path, SSL_FILETYPE_PEM ) != 1
             )
-            {   E_srv_W();
+            {
+                    #ifdef __gnu_linux__
+                V0( close( E_srv_S_epoll_fd )){}
+                    #endif
+                E_srv_W();
                 return ~0;
             }
             SSL_CTX_set_alpn_select_cb( E_srv_S_srv[ E_srv_S_srv_n - 1 ].ssl_ctx, &E_srv_I_alpn_select, 0 );
@@ -199,7 +207,11 @@ E_srv_M( void
         E_text_Z_n_N_s( &port[0] + l, E_conf_S_bind[i].port, sizeof( E_conf_S_bind[i].port ), 10 );
         port[l] = '\0';
         V0( getaddrinfo( E_conf_S_bind[i].ip, &port[0], &ai_hints, &ai ))
-        {   E_srv_W();
+        {
+                #ifdef __gnu_linux__
+            V0( close( E_srv_S_epoll_fd )){}
+                #endif
+            E_srv_W();
             return ~0;
         }
         E_srv_S_srv[ E_srv_S_srv_n - 1 ].bind_i = i;
@@ -207,6 +219,9 @@ E_srv_M( void
         E_srv_S_srv[ E_srv_S_srv_n - 1 ].canonical = M(l);
         if( !E_srv_S_srv[ E_srv_S_srv_n - 1 ].canonical )
         {   freeaddrinfo(ai);
+                #ifdef __gnu_linux__
+            V0( close( E_srv_S_epoll_fd )){}
+                #endif
             E_srv_W();
             return ~0;
         }
@@ -214,6 +229,9 @@ E_srv_M( void
         Mt_( E_srv_S_srv[ E_srv_S_srv_n - 1 ].sfd, 0 );
         if( !E_srv_S_srv[ E_srv_S_srv_n - 1 ].sfd )
         {   freeaddrinfo(ai);
+                #ifdef __gnu_linux__
+            V0( close( E_srv_S_epoll_fd )){}
+                #endif
             E_srv_W();
             return ~0;
         }
@@ -222,11 +240,17 @@ E_srv_M( void
         {   int sfd;
             V1( sfd = socket( ai_1->ai_family, ai_1->ai_socktype, ai_1->ai_protocol ))
             {   freeaddrinfo(ai);
+                    #ifdef __gnu_linux__
+                V0( close( E_srv_S_epoll_fd )){}
+                    #endif
                 E_srv_W();
                 return ~0;
             }
             if( !E_mem_Q_blk_I_append( &E_srv_S_srv[ E_srv_S_srv_n - 1 ].sfd, 1 ))
             {   freeaddrinfo(ai);
+                    #ifdef __gnu_linux__
+                V0( close( E_srv_S_epoll_fd )){}
+                    #endif
                 E_srv_W();
                 return ~0;
             }
@@ -234,11 +258,17 @@ E_srv_M( void
             E_srv_S_srv[ E_srv_S_srv_n - 1 ].sfd[ E_srv_S_srv[ E_srv_S_srv_n - 1 ].sfd_n - 1 ] = sfd;
             V0( bind( sfd, ai_1->ai_addr, ai_1->ai_addrlen ))
             {   freeaddrinfo(ai);
+                    #ifdef __gnu_linux__
+                V0( close( E_srv_S_epoll_fd )){}
+                    #endif
                 E_srv_W();
                 return ~0;
             }
             V0( listen( sfd, S_listen_backlog ))
             {   freeaddrinfo(ai);
+                    #ifdef __gnu_linux__
+                V0( close( E_srv_S_epoll_fd )){}
+                    #endif
                 E_srv_W();
                 return ~0;
             }
@@ -247,7 +277,11 @@ E_srv_M( void
         freeaddrinfo(ai);
     }
     V0( pipe( &E_srv_S_poll_pipe[0] ))
-    {   E_srv_W();
+    {
+            #ifdef __gnu_linux__
+        V0( close( E_srv_S_epoll_fd )){}
+            #endif
+        E_srv_W();
         return ~0;
     }
         #ifdef __gnu_linux__
@@ -260,6 +294,7 @@ E_srv_M( void
             V0( epoll_ctl( E_srv_S_epoll_fd, EPOLL_CTL_ADD, E_srv_S_srv[j].sfd[k], &ee ))
             {   V0( close( E_srv_S_poll_pipe[0] )){}
                 V0( close( E_srv_S_poll_pipe[1] )){}
+                V0( close( E_srv_S_epoll_fd )){}
                 E_srv_W();
                 return ~0;
             }
@@ -270,6 +305,7 @@ E_srv_M( void
     V0( epoll_ctl( E_srv_S_epoll_fd, EPOLL_CTL_ADD, E_srv_S_poll_pipe[0], &ee ))
     {   V0( close( E_srv_S_poll_pipe[0] )){}
         V0( close( E_srv_S_poll_pipe[1] )){}
+        V0( close( E_srv_S_epoll_fd )){}
         E_srv_W();
         return ~0;
     }
@@ -278,6 +314,7 @@ E_srv_M( void
     if( !E_srv_S_ee_ready )
     {   V0( close( E_srv_S_poll_pipe[0] )){}
         V0( close( E_srv_S_poll_pipe[1] )){}
+        V0( close( E_srv_S_epoll_fd )){}
         E_srv_W();
         return ~0;
     }
@@ -543,14 +580,14 @@ End_5:      ;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].peer_addr = peer_addr;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].buf_l = 0;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].preface = yes;
-                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].send_dynamic_table_size_max = 4096;
+                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].send_dynamic_table_size_max = 4096; //CONF
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].send_dynamic_table_size_max_hit = no;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].push = yes;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].concurrent_streams_max = ~0;
-                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].recv_window_size = 1024 * 1024;
-                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].send_window_size = 65535;
-                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].recv_frame_size_max = 64 * 1024;
-                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].send_frame_size_max = 16384;
+                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].recv_window_size = 1024 * 1024; //CONF
+                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].send_window_size = 65535; //CONF
+                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].recv_frame_size_max = 64 * 1024; //CONF
+                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].send_frame_size_max = 16384; //CONF
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].header_list_size_max = ~0;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].last_stream = ~0;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].buf = M( 9 + E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].recv_frame_size_max );
@@ -1649,6 +1686,17 @@ End_1:      if( E_srv_S_accept[i].ssl )
             if( E_srv_S_accept[i].buf_2 )
                 W( E_srv_S_accept[i].buf_2 );
             W( E_srv_S_accept[i].buf );
+                #ifdef __gnu_linux__
+            struct epoll_event ee;
+            ee.events = EPOLLIN;
+            ee.data.fd = E_srv_S_accept[i].listen_sock;
+            V0( epoll_ctl( E_net_cli_S_epoll_fd, EPOLL_CTL_DEL, E_srv_S_accept[i].listen_sock, &ee )){}
+            E_mem_Q_blk_I_remove( &E_net_cli_S_ee_ready, i, 1 );
+            E_net_cli_S_ee_ready_n--;
+                #else
+            E_mem_Q_blk_I_remove( &E_net_cli_S_poll_fd, i, 1 );
+            E_net_cli_S_poll_fd_n--;
+                #endif
             V0( close( E_srv_S_accept[i].listen_sock )){}
             if( !E_mem_Q_blk_I_remove( &E_srv_S_accept, i, 1 ))
             {   E_srv_W();
@@ -2231,8 +2279,9 @@ Next2:      FD_ZERO( &readfds );
                 G_(); Gd(i); Gs0_( "odczytano dane HTTP/2" ); Gd( E_srv_S_http2_accept[i].buf_l );
             }else
             {   if( E_srv_S_http2_accept[i].buf != E_srv_S_http2_accept[i].buf_ )
-                    E_mem_Q_blk_I_copy( E_srv_S_http2_accept[i].buf, E_srv_S_http2_accept[i].buf_, E_srv_S_http2_accept[i].buf + E_srv_S_http2_accept[i].buf_l - E_srv_S_http2_accept[i].buf_ );
-                E_srv_S_http2_accept[i].buf_l -= E_srv_S_http2_accept[i].buf_ - E_srv_S_http2_accept[i].buf;
+                {   E_mem_Q_blk_I_copy( E_srv_S_http2_accept[i].buf, E_srv_S_http2_accept[i].buf_, E_srv_S_http2_accept[i].buf + E_srv_S_http2_accept[i].buf_l - E_srv_S_http2_accept[i].buf_ );
+                    E_srv_S_http2_accept[i].buf_l -= E_srv_S_http2_accept[i].buf_ - E_srv_S_http2_accept[i].buf;
+                }
                 N l;
                 if(( ssl_ret = E_net_cli_I_read_data( E_srv_S_http2_accept[i].ssl, ~0, E_srv_S_http2_accept[i].buf + E_srv_S_http2_accept[i].buf_l, 9 + E_srv_S_http2_accept[i].recv_frame_size_max - E_srv_S_http2_accept[i].buf_l )) <= 0 )
                     goto End2_1;
@@ -4081,6 +4130,17 @@ End2_1:     e = SSL_get_error( E_srv_S_http2_accept[i].ssl, ssl_ret );
             W( E_srv_S_http2_accept[i].buf_2 );
             if( E_srv_S_http2_accept[i].buf )
                 W( E_srv_S_http2_accept[i].buf );
+                #ifdef __gnu_linux__
+            struct epoll_event ee;
+            ee.events = EPOLLIN;
+            ee.data.fd = E_srv_S_http2_accept[i].listen_sock;
+            V0( epoll_ctl( E_net_cli_S_epoll_fd, EPOLL_CTL_DEL, E_srv_S_http2_accept[i].listen_sock, &ee )){}
+            E_mem_Q_blk_I_remove( &E_net_cli_S_ee_ready, i, 1 );
+            E_net_cli_S_ee_ready_n--;
+                #else
+            E_mem_Q_blk_I_remove( &E_net_cli_S_poll_fd, i, 1 );
+            E_net_cli_S_poll_fd_n--;
+                #endif
             V0( close( E_srv_S_http2_accept[i].listen_sock )){}
             if( !E_mem_Q_blk_I_remove( &E_srv_S_http2_accept, i, 1 ))
             {   E_srv_W();
