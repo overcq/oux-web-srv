@@ -1649,17 +1649,6 @@ End_1:      if( E_srv_S_accept[i].ssl )
             if( E_srv_S_accept[i].buf_2 )
                 W( E_srv_S_accept[i].buf_2 );
             W( E_srv_S_accept[i].buf );
-                #ifdef __gnu_linux__
-            struct epoll_event ee;
-            ee.events = EPOLLIN;
-            ee.data.fd = E_srv_S_accept[i].listen_sock;
-            V0( epoll_ctl( E_srv_S_epoll_fd, EPOLL_CTL_DEL, E_srv_S_accept[i].listen_sock, &ee )){}
-            E_mem_Q_blk_I_remove( &E_srv_S_ee_ready, 1 + i, 1 );
-            E_srv_S_ee_ready_n--;
-                #else
-            E_mem_Q_blk_I_remove( &E_srv_S_poll_fd, 1 + i, 1 );
-            E_srv_S_poll_fd_n--;
-                #endif
             V0( close( E_srv_S_accept[i].listen_sock )){}
             if( !E_mem_Q_blk_I_remove( &E_srv_S_accept, i, 1 ))
             {   E_srv_W();
@@ -4093,17 +4082,6 @@ End2_1:     e = SSL_get_error( E_srv_S_http2_accept[i].ssl, ssl_ret );
             W( E_srv_S_http2_accept[i].buf_2 );
             if( E_srv_S_http2_accept[i].buf )
                 W( E_srv_S_http2_accept[i].buf );
-                #ifdef __gnu_linux__
-            struct epoll_event ee;
-            ee.events = EPOLLIN;
-            ee.data.fd = E_srv_S_http2_accept[i].listen_sock;
-            V0( epoll_ctl( E_srv_S_epoll_fd, EPOLL_CTL_DEL, E_srv_S_http2_accept[i].listen_sock, &ee )){}
-            E_mem_Q_blk_I_remove( &E_srv_S_ee_ready, 1 + i, 1 );
-            E_srv_S_ee_ready_n--;
-                #else
-            E_mem_Q_blk_I_remove( &E_srv_S_poll_fd, 1 + i, 1 );
-            E_srv_S_poll_fd_n--;
-                #endif
             V0( close( E_srv_S_http2_accept[i].listen_sock )){}
             if( !E_mem_Q_blk_I_remove( &E_srv_S_http2_accept, i, 1 ))
             {   E_srv_W();
