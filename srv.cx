@@ -114,7 +114,7 @@ struct E_srv_Z_http2_accept
   Pc *dynamic_table_enc;
   N dynamic_table_enc_n;
   struct E_mem_Q_tab_Z *stream;
-  I last_stream;
+  N32 last_stream;
 } *E_srv_S_http2_accept;
 N E_srv_S_http2_accept_n;
 int E_srv_S_poll_pipe[2];
@@ -405,12 +405,12 @@ D( srv, srv )
 {   Dh_();
     Xh_A( E_srv_D_srv_I_unblock );
     I_D
-    {   N n;
+    {   N ready_n;
         Xh_B_();
             #ifdef __gnu_linux__
-        VO1_( n = epoll_wait( E_srv_S_epoll_fd, E_srv_S_ee_ready, E_srv_S_ee_ready_n, E_srv_S_accept_n || E_srv_S_http2_accept_n ? S_system_idle_time : -1 ));
+        VO1_( ready_n = epoll_wait( E_srv_S_epoll_fd, E_srv_S_ee_ready, E_srv_S_ee_ready_n, E_srv_S_accept_n || E_srv_S_http2_accept_n ? S_system_idle_time : -1 ));
             #else
-        VO1_( n = poll( E_srv_S_poll_fd, E_srv_S_poll_fd_n, E_srv_S_accept_n || E_srv_S_http2_accept_n ? S_system_idle_time : -1 ));
+        VO1_( ready_n = poll( E_srv_S_poll_fd, E_srv_S_poll_fd_n, E_srv_S_accept_n || E_srv_S_http2_accept_n ? S_system_idle_time : -1 ));
             #endif
         Xh_B()
         {   for_n( i, E_srv_S_accept_n )
@@ -469,7 +469,7 @@ D( srv, srv )
             break;
         }
             #ifdef __gnu_linux__
-        for_n( i, n )
+        for_n( i, ready_n )
         {
             #else
         for_n( i, E_srv_S_poll_fd_n )
@@ -662,17 +662,13 @@ End_5:      ;
         {   if( E_srv_S_accept[i].file == -1 )
             {   if( !E_srv_S_accept[i].buf_l )
                 {   ssl_ret = 0;
-                    fd_set readfds;
-Next:               FD_ZERO( &readfds );
-                    FD_SET( E_srv_S_accept[i].listen_sock, &readfds );
-                    struct timeval tv = { 0, 0 };
-                    int e;
-                    V1e( select( E_srv_S_accept[i].listen_sock + 1, &readfds, 0, 0, &tv ), e )
-                    {   if( e == EINTR || e == EAGAIN )
-                            goto Next;
+                    struct pollfd pollfd =
+                    { .fd = E_srv_S_accept[i].listen_sock
+                    , .events = POLLIN
+                    };
+                    VO1( ready_n = poll( &pollfd, 1, 0 ))
                         goto End_1;
-                    }
-                    if( !FD_ISSET( E_srv_S_accept[i].listen_sock, &readfds ))
+                    if( !ready_n )
                     {   Z_clock_time tv;
                         _gettime( &tv );
                         if( _timercmp( &tv, <, &E_srv_S_accept[i].keepalive_tv ))
@@ -694,17 +690,15 @@ Next:               FD_ZERO( &readfds );
                     G_(); Gd(i); Gs0_( "odczytano nagłówek" ); Gd( E_srv_S_accept[i].buf_l );
                     G_(); Gd(i); Gsl( E_srv_S_accept[i].buf, E_srv_S_accept[i].buf_l );
                 }else
-                {   fd_set readfds;
-Next_1:             FD_ZERO( &readfds );
-                    FD_SET( E_srv_S_accept[i].listen_sock, &readfds );
-                    struct timeval tv = { 0, 0 };
-                    int e;
-                    V1e( select( E_srv_S_accept[i].listen_sock + 1, &readfds, 0, 0, &tv ), e )
-                    {   if( e == EINTR || e == EAGAIN )
-                            goto Next_1;
+                {
+Next_1:             ;
+                    struct pollfd pollfd =
+                    { .fd = E_srv_S_accept[i].listen_sock
+                    , .events = POLLIN
+                    };
+                    VO1( ready_n = poll( &pollfd, 1, 0 ))
                         goto End_1;
-                    }
-                    if( FD_ISSET( E_srv_S_accept[i].listen_sock, &readfds ))
+                    if( !ready_n )
                     {   if( E_srv_S_accept[i].buf != E_srv_S_accept[i].buf_ ) // Jeżeli nie przeskoczono z post.
                             E_mem_Q_blk_I_copy( E_srv_S_accept[i].buf, E_srv_S_accept[i].buf_, E_srv_S_accept[i].buf_l );
                         N l;
@@ -2189,18 +2183,14 @@ End3:                           ;
                     }
                 }
             }
-            fd_set readfds;
-Next2:      FD_ZERO( &readfds );
-            FD_SET( E_srv_S_http2_accept[i].listen_sock, &readfds );
-            struct timeval tv_ = { 0, 0 };
-            int e;
-            V1e( select( E_srv_S_http2_accept[i].listen_sock + 1, &readfds, 0, 0, &tv_ ), e )
-            {   if( e == EINTR || e == EAGAIN )
-                    goto Next2;
-                goaway_error = E_srv_Z_error_S_internal_error;
-                goto End2_2;
-            }
-            if( !FD_ISSET( E_srv_S_http2_accept[i].listen_sock, &readfds ))
+Next2:      ;
+            struct pollfd pollfd =
+            { .fd = E_srv_S_http2_accept[i].listen_sock
+            , .events = POLLIN
+            };
+            VO1( ready_n = poll( &pollfd, 1, 0 ))
+                goto End_1;
+            if( !ready_n )
             {   B cont = no;
                 for_each( stream_id_, E_srv_S_http2_accept[i].stream, E_mem_Q_tab )
                 {   struct E_srv_Z_http2_stream *stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id_ );
@@ -3943,7 +3933,12 @@ End4:                                                   ;
                         break;
                     }
                   case E_http2_srv_Z_frame_type_S_goaway:
-                    {   last_stream = E_net_http2_Q_buffer_I_read_n( &E_srv_S_http2_accept[i].buf_, 4 ) & 0x7fffffff;
+                    {   G_();
+                        if( frame_length < 8 )
+                        {   goaway_error = E_srv_Z_error_S_protocol_error;
+                            goto End2_2;
+                        }
+                        last_stream = E_net_http2_Q_buffer_I_read_n( &E_srv_S_http2_accept[i].buf_, 4 ) & 0x7fffffff;
                         N32 error = E_net_http2_Q_buffer_I_read_n( &E_srv_S_http2_accept[i].buf_, 4 );
                         G_(); Gd(error);
                         E_srv_S_http2_accept[i].buf_ += frame_length - 8;
@@ -4036,7 +4031,8 @@ End2_2:     if( !~E_srv_S_http2_accept[i].last_stream )
                 E_net_http2_Q_buffer_I_write_n( &E_srv_S_http2_accept[i].buf_2_, goaway_error, 4 );
             }
             ssl_ret = E_net_cli_I_write_data( E_srv_S_http2_accept[i].ssl, E_srv_S_http2_accept[i].listen_sock, E_srv_S_http2_accept[i].buf_2, E_srv_S_http2_accept[i].buf_2_ - E_srv_S_http2_accept[i].buf_2 );
-End2_1:     e = SSL_get_error( E_srv_S_http2_accept[i].ssl, ssl_ret );
+End2_1:     ;
+            int e = SSL_get_error( E_srv_S_http2_accept[i].ssl, ssl_ret );
             if( !~E_srv_S_http2_accept[i].last_stream
             && e == SSL_ERROR_NONE
             )
