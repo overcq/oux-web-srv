@@ -1902,7 +1902,10 @@ End3:                           ;
                                     && E_text_Z_s0_R_s0_search( h, "gzip" )
                                     )
                                         gz = yes;
-                                    if(gz)
+                                    if( gz
+                                    && !E_text_Z_s0_T_s0_ends( E_http2_push_S_links[m], ".php" )
+                                    && !E_text_Z_s0_T_s0_ends( E_http2_push_S_links[m], ".gz" )
+                                    )
                                     {   Pc s = E_mem_Q_blk_I_append( &E_http2_push_S_links[m], 3 );
                                         if( !s )
                                         {   for( ; m != E_http2_push_S_links_n; m++ )
@@ -3053,6 +3056,8 @@ Http2_srv:                      ;
                                                     goto End2_2;
                                                 }
                                                 E_text_Z_s_P_s_copy_0( headers[ headers_n ], s, s_ );
+                                                Pc s_ = E_text_Z_s0_R_s0_search( headers[ headers_n ], ": " );
+                                                E_text_Z_s_I_lower( headers[ headers_n ], s_ );
                                                 headers_n++;
                                             }
                                         }
@@ -3281,12 +3286,12 @@ End4:                                                   ;
                                                                 }
                                                             E_text_Z_s_P_s0_copy( stream->headers[ headers_path_i ] + 7, E_http2_push_S_links[m] );
                                                             I push_stream_id = E_mem_Q_tab_I_add( E_srv_S_http2_accept[i].stream );
-                                                            stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
                                                             if( !~push_stream_id )
                                                             {   for( ; m != E_http2_push_S_links_n; m++ )
                                                                     W( E_http2_push_S_links[m] );
                                                                 break;
                                                             }
+                                                            stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, frame_stream - 1 );
                                                             if( push_stream_id + 1 > E_srv_S_http2_accept[i].concurrent_streams_max )
                                                             {   if( !~E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, push_stream_id ))
                                                                 {   for( ; m != E_http2_push_S_links_n; m++ )
@@ -3296,7 +3301,7 @@ End4:                                                   ;
                                                                     goaway_error = E_srv_Z_error_S_internal_error;
                                                                     goto End2_2;
                                                                 }
-                                                                stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
+                                                                stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, frame_stream - 1 );
                                                                 for( ; m != E_http2_push_S_links_n; m++ )
                                                                     W( E_http2_push_S_links[m] );
                                                                 break;
@@ -3317,7 +3322,10 @@ End4:                                                   ;
                                                             && E_text_Z_s0_R_s0_search( h, "gzip" )
                                                             )
                                                                 gz = yes;
-                                                            if(gz)
+                                                            if( gz
+                                                            && !E_text_Z_s0_T_s0_ends( E_http2_push_S_links[m], ".php" )
+                                                            && !E_text_Z_s0_T_s0_ends( E_http2_push_S_links[m], ".gz" )
+                                                            )
                                                             {   Pc s = E_mem_Q_blk_I_append( &E_http2_push_S_links[m], 3 );
                                                                 if( !s )
                                                                 {   for( ; m != E_http2_push_S_links_n; m++ )
@@ -3339,7 +3347,7 @@ End4:                                                   ;
                                                                             goaway_error = E_srv_Z_error_S_internal_error;
                                                                             goto End2_2;
                                                                         }
-                                                                        stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
+                                                                        stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, frame_stream - 1 );
                                                                         continue;
                                                                     }
                                                                     gz = no;
@@ -3354,7 +3362,7 @@ End4:                                                   ;
                                                                         goaway_error = E_srv_Z_error_S_internal_error;
                                                                         goto End2_2;
                                                                     }
-                                                                    stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
+                                                                    stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, frame_stream - 1 );
                                                                     continue;
                                                                 }
                                                             }
@@ -3376,7 +3384,7 @@ End4:                                                   ;
                                                                 goaway_error = E_srv_Z_error_S_internal_error;
                                                                 goto End2_2;
                                                             }
-                                                            G_(); Gd( stream_id + 1 ); Gd( push_stream_id + 1 ); Gs0( E_http2_push_S_links[m] );
+                                                            G_(); Gd( frame_stream - 1 ); Gd( push_stream_id + 1 ); Gs0( E_http2_push_S_links[m] );
                                                             // Ramka “promise”.
                                                             for_n( headers_i, stream->headers_n )
                                                             {   G_(); Gs0( stream->headers[ headers_i ] );
@@ -3391,7 +3399,7 @@ End4:                                                   ;
                                                                 goaway_error = E_srv_Z_error_S_internal_error;
                                                                 goto End2_2;
                                                             }
-                                                            E_net_http2_Q_buffer_I_write_frame_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_push_promise, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_end_headers, stream_id + 1 );
+                                                            E_net_http2_Q_buffer_I_write_frame_header( &p, E_srv_S_http2_accept[i].buf_2_ - ( p + 9 ), E_http2_srv_Z_frame_type_S_push_promise, E_http2_srv_Z_frame_type_push_promise_Z_flag_S_end_headers, frame_stream - 1 );
                                                             E_net_http2_Q_buffer_I_write_n( &p, push_stream_id + 1, 4 );
                                                             // Ramka “headers".
                                                             N headers_n = 3;
@@ -3563,21 +3571,14 @@ End4:                                                   ;
                                                 }
                                                 E_text_syntax_Q_state_W( state, state_n );
                                                 E_mem_Q_file_W_nosave( stream->push_file );
-                                                V0( unlink( stream->push_filename )){}
                                                 stream->push_file = ~0;
+                                                V0( unlink( stream->push_filename )){}
                                                 W( stream->push_filename );
                                                 if( stream->z_stream )
                                                 {   inflateEnd( stream->z_stream );
                                                     W_( stream->z_stream );
                                                     W( stream->zlib_data );
                                                 }
-                                            }
-                                            for_n( k, stream->headers_n )
-                                                W( stream->headers[k] );
-                                            W( stream->headers );
-                                            if( !~E_mem_Q_tab_I_remove( E_srv_S_http2_accept[i].stream, frame_stream - 1 ))
-                                            {   goaway_error = E_srv_Z_error_S_internal_error;
-                                                goto End2_2;
                                             }
                                         }else // Może być więcej danych.
                                         {   l -= ( s_end + 4 - buf );
@@ -3896,9 +3897,7 @@ End4:                                                   ;
                         }
                         if( frame_flags == E_http2_srv_Z_frame_type_settings_Z_flag_S_ack )
                             break;
-                
                         E_net_http2_Q_buffer_I_write_frame_header( &E_srv_S_http2_accept[i].buf_2_, 0, E_http2_srv_Z_frame_type_S_settings, E_http2_srv_Z_frame_type_settings_Z_flag_S_ack, 0 );
-                
                         for_n( j, frame_length / 6 )
                         {   N identifier = E_net_http2_Q_buffer_I_read_n( &E_srv_S_http2_accept[i].buf_, 2 );
                             N value = E_net_http2_Q_buffer_I_read_n( &E_srv_S_http2_accept[i].buf_, 4 );
