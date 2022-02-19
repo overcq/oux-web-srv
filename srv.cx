@@ -1004,6 +1004,7 @@ End:            ;
                     s = s_1;
                 }
                 // Dodanie ostatniego wpisu na ścieżce lub pliku index.
+                B dir = no;
                 if( s_1 - ( s + 1 ))
                 {   N path_end_i = path_end - path;
                     if( !E_mem_Q_blk_I_append( &path, s_1 - ( s + 1 )))
@@ -1015,7 +1016,28 @@ End:            ;
                     path_end = E_text_Z_s_P_s_copy( path_end, s + 1, s_1 );
                     *path_end = '\0';
                     path_uri_end_i = path_end - path;
+                    struct stat stat_;
+                    V0( stat( path, &stat_ ))
+                    {   W(path);
+                        E_reply_I_code( E_srv_S_accept[i].ssl, E_srv_S_accept[i].listen_sock, 500, yes, http_11 );
+                        goto End_1;
+                    }
+                    if(( stat_.st_mode & S_IFMT ) == S_IFDIR )
+                    {   N path_end_i = path_end - path;
+                        if( !E_mem_Q_blk_I_append( &path, 1 ))
+                        {   W(path);
+                            E_reply_I_code( E_srv_S_accept[i].ssl, E_srv_S_accept[i].listen_sock, 500, yes, http_11 );
+                            goto End_1;
+                        }
+                        path_end = path + path_end_i;
+                        *path_end++ = '/';
+                        *path_end = '\0';
+                        path_uri_end_i = path_end - path;
+                        dir = yes;
+                    }
                 }else
+                    dir = yes;
+                if(dir)
                 {   N path_end_i = path_end - path;
                     if( !E_mem_Q_blk_I_append( &path, E_text_Z_s0_R_l( S_php_index_file )))
                     {   W(path);
@@ -2604,6 +2626,7 @@ Http2_srv:                      ;
                                     s = s_1;
                                 }
                                 // Dodanie ostatniego wpisu na ścieżce lub pliku index.
+                                B dir = no;
                                 if( s_1 - ( s + 1 ))
                                 {   N path_end_i = path_end - path;
                                     if( !E_mem_Q_blk_I_append( &path, s_1 - ( s + 1 )))
@@ -2618,7 +2641,34 @@ Http2_srv:                      ;
                                     path_end = E_text_Z_s_P_s_copy( path_end, s + 1, s_1 );
                                     *path_end = '\0';
                                     path_uri_end_i = path_end - path;
+                                    struct stat stat_;
+                                    V0( stat( path, &stat_ ))
+                                    {   W(path);
+                                        if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max, &E_srv_S_http2_accept[i].send_dynamic_table_size_max_hit ))
+                                        {   goaway_error = E_srv_Z_error_S_internal_error;
+                                            goto End2_2;
+                                        }
+                                        goto End2_3;
+                                    }
+                                    if(( stat_.st_mode & S_IFMT ) == S_IFDIR )
+                                    {   N path_end_i = path_end - path;
+                                        if( !E_mem_Q_blk_I_append( &path, 1 ))
+                                        {   W(path);
+                                            if( !~E_http2_srv_I_reply_code( frame_stream, &E_srv_S_http2_accept[i].buf_2_, 500, &E_srv_S_http2_accept[i].dynamic_table_enc, &E_srv_S_http2_accept[i].dynamic_table_enc_n, E_srv_S_http2_accept[i].send_dynamic_table_size_max, &E_srv_S_http2_accept[i].send_dynamic_table_size_max_hit ))
+                                            {   goaway_error = E_srv_Z_error_S_internal_error;
+                                                goto End2_2;
+                                            }
+                                            goto End2_3;
+                                        }
+                                        path_end = path + path_end_i;
+                                        *path_end++ = '/';
+                                        *path_end = '\0';
+                                        path_uri_end_i = path_end - path;
+                                        dir = yes;
+                                    }
                                 }else
+                                    dir = yes;
+                                if(dir)
                                 {   N path_end_i = path_end - path;
                                     if( !E_mem_Q_blk_I_append( &path, E_text_Z_s0_R_l( S_php_index_file )))
                                     {   W(path);
