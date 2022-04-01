@@ -122,6 +122,6 @@ odstęp linii
 koniec linii
     "\n"
 odstęp zwykły
-	" "
+    " "
 odstęp tabulacji
-	"\t"
+    "\t"
