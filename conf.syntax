@@ -41,24 +41,24 @@ virtual host name
     "virtualhost"
 
 linia ip
-    ip name, odstępy linii, ip
+    ip name, odstępy w linii, ip
 linia port
-    port name, odstępy linii, port
+    port name, odstępy w linii, port
 linia ssl
-/ odstępy linii
+/ odstępy w linii
     ssl name, ssl value ?
 linia certificate
-/ odstępy linii
+/ odstępy w linii
     certificate name, certificate
 linia private key
-/ odstępy linii
+/ odstępy w linii
     private key name, private key
 
 linia root path
-/ odstępy linii
+/ odstępy w linii
     root path name, root path
 linia host
-/ odstępy linii
+/ odstępy w linii
     host name, host
 
 ip name
@@ -111,7 +111,7 @@ odstępy z komentarzami
     komentarze ?, odstępy ...
 odstępy
     odstęp ...
-odstępy linii
+odstępy w linii
     odstęp w linii ...
 
 odstęp
