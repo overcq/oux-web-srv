@@ -117,6 +117,7 @@ struct E_srv_Z_http2_accept
   N dynamic_table_enc_n;
   Pc authority;
   struct E_mem_Q_tab_Z *stream;
+  N32 new_stream;
   N32 new_push_stream;
   N32 last_stream;
 } *E_srv_S_http2_accept;
@@ -407,10 +408,10 @@ E_srv_D_srv_I_unblock( P p
 }
 N32
 E_srv_R_new_push_stream( N i
-){  N32 stream_id = E_srv_S_http2_accept[i].new_push_stream;
+){  if( (S32)E_srv_S_http2_accept[i].new_push_stream < 0 )
+        return ~0;
+    N32 stream_id = E_srv_S_http2_accept[i].new_push_stream;
     E_srv_S_http2_accept[i].new_push_stream += 2;
-    if( (S32)E_srv_S_http2_accept[i].new_push_stream < 0 )
-        E_srv_S_http2_accept[i].new_push_stream = 2;
     return stream_id;
 }
 D( srv, srv )
@@ -453,9 +454,11 @@ D( srv, srv )
                     W( E_srv_S_http2_accept[i].authority );
                 for_each( stream_id, E_srv_S_http2_accept[i].stream, E_mem_Q_tab )
                 {   struct E_srv_Z_http2_stream *stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_id );
-                    for_n( j, stream->headers_n )
-                        W( stream->headers[j] );
-                    W( stream->headers );
+                    if( stream->headers )
+                    {   for_n( j, stream->headers_n )
+                            W( stream->headers[j] );
+                        W( stream->headers );
+                    }
                     if( stream->file != -1 )
                     {   V0( close( stream->file )){}
                     }
@@ -566,6 +569,7 @@ End_5:      ;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].recv_frame_size_max = 64 * 1024; //CONF
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].send_frame_size_max = 16384; //CONF
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].header_list_size_max = ~0;
+                    E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].new_stream = 1;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].new_push_stream = 2;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].last_stream = ~0;
                     E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].buf = M( 9 + E_srv_S_http2_accept[ E_srv_S_http2_accept_n - 1 ].recv_frame_size_max );
@@ -1978,7 +1982,9 @@ End3:                           ;
                                     push_stream->z_stream = 0;
                                     push_stream->headers_n = 0;
                                     Mt_( push_stream->headers, 0 );
-                                    if( !push_stream->headers )
+                                    if( !~push_stream->stream_id
+                                    || !push_stream->headers
+                                    )
                                     {   for_n( m, E_http2_push_S_links_n )
                                             W( E_http2_push_S_links[m] );
                                         W( E_http2_push_S_links );
@@ -2363,11 +2369,13 @@ End2:       if( E_srv_S_http2_accept[i].preface )
                     {   G_();
                         if( !frame_stream
                         || (S32)frame_stream < 0
+                        || frame_stream < E_srv_S_http2_accept[i].new_stream
                         || frame_stream > E_srv_S_http2_accept[i].concurrent_streams_max
                         )
                         {   goaway_error = E_srv_Z_error_S_protocol_error;
                             goto End2_2;
                         }
+                        E_srv_S_http2_accept[i].new_stream += 2;
                         if( frame_stream > E_srv_S_http2_accept[i].last_stream )
                         {   E_srv_S_http2_accept[i].buf_ += frame_length;
                             continue;
@@ -3441,7 +3449,9 @@ End4:                                                   ;
                                                             push_stream->z_stream = 0;
                                                             push_stream->headers_n = 0;
                                                             Mt_( push_stream->headers, 0 );
-                                                            if( !push_stream->headers )
+                                                            if( !~push_stream->stream_id
+                                                            || !push_stream->headers
+                                                            )
                                                             {   for_n( m, E_http2_push_S_links_n )
                                                                     W( E_http2_push_S_links[m] );
                                                                 W( E_http2_push_S_links );
@@ -4196,9 +4206,11 @@ End2_1:     ;
                 W( E_srv_S_http2_accept[i].authority );
             for_each( stream_i, E_srv_S_http2_accept[i].stream, E_mem_Q_tab )
             {   struct E_srv_Z_http2_stream *stream = E_mem_Q_tab_R( E_srv_S_http2_accept[i].stream, stream_i );
-                for_n( k, stream->headers_n )
-                    W( stream->headers[k] );
-                W( stream->headers );
+                if( stream->headers )
+                {   for_n( k, stream->headers_n )
+                        W( stream->headers[k] );
+                    W( stream->headers );
+                }
                 if( stream->file != -1 )
                 {   V0( close( stream->file )){}
                 }
