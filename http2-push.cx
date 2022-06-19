@@ -16,7 +16,7 @@ enum E_http2_push_Z_tag
 , E_http2_push_Z_tag_S_link
 };
 enum E_http2_push_Z_tag E_http2_push_S_tag;
-B attr;
+B E_http2_push_S_attr;
 Pc *E_http2_push_S_links;
 N E_http2_push_S_links_n;
 //==============================================================================
@@ -141,13 +141,13 @@ E_http2_push_I_entities_func_Z_html( struct E_text_syntax_Z_body *syntax
     else if( state[ state_n - 1 ].entities_i == entities_href
     && E_http2_push_S_tag == E_http2_push_Z_tag_S_link
     )
-    {   attr = yes;
-    }else if( state[ state_n - 1 ].entities_i == entities_src
+        E_http2_push_S_attr = yes;
+    else if( state[ state_n - 1 ].entities_i == entities_src
     && E_http2_push_S_tag == E_http2_push_Z_tag_S_img
     )
-    {   attr = yes;
-    }else if( state[ state_n - 1 ].entities_i == entities_attr
-    && attr
+        E_http2_push_S_attr = yes;
+    else if( state[ state_n - 1 ].entities_i == entities_attr
+    && E_http2_push_S_attr
     )
     {   if( *state[ state_n - 1 ].s
         && E_mem_Q_blk_I_append( &E_http2_push_S_links, 1 )
@@ -176,7 +176,7 @@ E_http2_push_I_entities_func_Z_html( struct E_text_syntax_Z_body *syntax
             }
         }
     }else if( state[ state_n - 1 ].entities_i == entities_oth_attr )
-        attr = no;
+        E_http2_push_S_attr = no;
     return 0;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
