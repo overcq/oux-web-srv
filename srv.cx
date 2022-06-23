@@ -3965,6 +3965,7 @@ End4:                                                   ;
                         G_(); Gd(error);
                         if( !frame_stream
                         || (S32)frame_stream < 0
+                        || !E_mem_Q_tab_R_n( E_srv_S_http2_accept[i].stream )
                         )
                         {   goaway_error = E_srv_Z_error_S_protocol_error;
                             goto End2_2;

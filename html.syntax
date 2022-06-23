@@ -1,15 +1,16 @@
 body
+/ odstępy
     doctype ?
-    odstępy ?
     znaczniki
     @eof
 
 doctype
     "<!DOCTYPE"
     odstępy
-    /[Hh][Tt][Mm][Ll][^>]*/
+    /html[^>]*/i
     ">"
 znaczniki
+/ odstępy
     znacznik ...
 znacznik
     treść dokumentu | znacznik komentarza | znacznik rozpoczynający | znacznik kończący
@@ -25,8 +26,10 @@ znacznik kończący
     ">"
 znacznik komentarza
     "<!--"
-    /[^>]*/
-    "-->"
+    !/--/
+    "--"
+    odstępy ?
+    ">"
 zamknięcie znacznika
     odstępy ?
     "/"
@@ -34,11 +37,11 @@ zamknięcie znacznika
 nazwa znacznika
     img | link | inna nazwa znacznika
 img
-    /[Ii][Mm][Gg]/
+    /img/i
 link
-    /[Ll][Ii][Nn][Kk]/
+    /link/i
 inna nazwa znacznika
-    /[A-Za-z]+[0-9A-Za-z]?/
+    /[a-z]+[0-9a-z]?/i
 wypełnienie znacznika
     atrybut ...
 
@@ -49,11 +52,11 @@ atrybut
 nazwa atrybutu
     href | src | inna nazwa atrybutu
 href
-    /[Hh][Rr][Ee][Ff]/
+    /href/i
 src
-    /[Ss][Rr][Cc]/
+    /src/i
 inna nazwa atrybutu
-    /[-A-Za-z]+/
+    /[-a-z]+/i
 wartość atrybutu ze znakiem równości
     "="
     wartość atrybutu ?
