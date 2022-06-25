@@ -1,38 +1,64 @@
 body
 / odstępy
+    odstępy ?
     doctype ?
     znaczniki
+    odstępy ?
     @eof
 
 doctype
-    "<!DOCTYPE"
-    odstępy
-    /html[^>]*/i
+    znaczniki komentarza ?
+    odstępy ?
+    /<!DOCTYPE/i
+    doctype name ?
+    doctype system-public ?
+    odstępy ?
     ">"
+doctype name
+    odstępy
+    /html/i
+doctype system-public
+    odstępy
+    /SYSTEM/i | /PUBLIC/i
+    odstępy
+    wartość atrybutu w podwójnych cudzysłowach | wartość atrybutu w pojedynczych cudzysłowach
+
 znaczniki
 / odstępy
     znacznik ...
 znacznik
-    treść dokumentu | znacznik komentarza | znacznik rozpoczynający | znacznik kończący
+    treść dokumentu | cdata | znacznik komentarza | znacznik rozpoczynający | znacznik kończący
+
+cdata
+    "<![CDA­TA["
+    !/]]>/
+    "]]>"
+
+znaczniki komentarza
+    znacznik komentarza ...
+znacznik komentarza
+    "<!--"
+    zawartość znacznika komentarza ?
+    odstępy ?
+    ">"
+zawartość znacznika komentarza
+    !/--/
+    "--"
+
 znacznik rozpoczynający
     "<"
     nazwa znacznika
     wypełnienie znacznika ?
     zamknięcie znacznika ?
     ">"
+zamknięcie znacznika
+    odstępy ?
+    "/"
+
 znacznik kończący
     "</"
     nazwa znacznika
     ">"
-znacznik komentarza
-    "<!--"
-    !/--/
-    "--"
-    odstępy ?
-    ">"
-zamknięcie znacznika
-    odstępy ?
-    "/"
 
 nazwa znacznika
     img | link | inna nazwa znacznika
@@ -42,11 +68,12 @@ link
     /link/i
 inna nazwa znacznika
     /[a-z]+[0-9a-z]?/i
+
 wypełnienie znacznika
+/ odstępy
     atrybut ...
 
 atrybut
-    odstępy
     nazwa atrybutu
     wartość atrybutu ze znakiem równości ?
 nazwa atrybutu
@@ -58,18 +85,20 @@ src
 inna nazwa atrybutu
     /[-a-z]+/i
 wartość atrybutu ze znakiem równości
+    odstępy ?
     "="
+    odstępy ?
     wartość atrybutu ?
 wartość atrybutu
     wartość atrybutu w podwójnych cudzysłowach | wartość atrybutu w pojedynczych cudzysłowach | wartość atrybutu bez cudzysłowów
 wartość atrybutu w podwójnych cudzysłowach
     "\""
-    /[^\"]*/
-    "\""
+    /[^">]*/
+    "\"" ?
 wartość atrybutu w pojedynczych cudzysłowach
     "\'"
-    /[^\']*/
-    "\'"
+    /[^'>]*/
+    "\'" ?
 wartość atrybutu bez cudzysłowów
     /[^ \t\n>]*/
 
@@ -82,13 +111,15 @@ odstępy linii
     odstęp linii ...
 
 odstęp
-    odstęp zwykły | odstęp tabulacji | koniec linii
+    odstęp zwykły | odstęp tabulacji | odstęp form-feed | koniec linii
 odstęp linii
-    odstęp zwykły | odstęp tabulacji
+    odstęp zwykły | odstęp tabulacji | odstęp form-feed
 
-koniec linii
-    "\n"
 odstęp zwykły
     " "
 odstęp tabulacji
     "\t"
+odstęp form-feed
+    "\f"
+koniec linii
+    "\n" | "\r"
