@@ -163,7 +163,7 @@ entities_func( struct E_text_syntax_Z_body *syntax
 //------------------------------------------------------------------------------
 N
 E_conf_I_read( I conf_file
-){  I syntax_file = E_mem_Q_file_M( "conf.syntax", yes );
+){  I syntax_file = E_mem_Q_file_M( "conf.syntax", yes, 0 );
     if( !~syntax_file )
         return ~0;
     struct E_text_syntax_Z_body *syntax;

@@ -182,7 +182,7 @@ E_http2_push_I_entities_func_Z_html( struct E_text_syntax_Z_body *syntax
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 N
 E_http2_push_M( void
-){  I file = E_mem_Q_file_M( "html.syntax", yes );
+){  I file = E_mem_Q_file_M( "html.syntax", yes, 0 );
     if( !~file )
         return ~0;
     if( !~E_text_syntax_M( file, &E_http2_push_Z_syntax_html ))

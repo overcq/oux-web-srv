@@ -42,7 +42,7 @@ znacznik komentarza
     odstępy ?
     ">"
 zawartość znacznika komentarza
-    !/--/
+    !"--"
     "--"
 
 znacznik rozpoczynający
