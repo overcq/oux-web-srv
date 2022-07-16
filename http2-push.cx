@@ -20,14 +20,6 @@ B E_http2_push_S_attr;
 Pc *E_http2_push_S_links;
 N E_http2_push_S_links_n;
 //==============================================================================
-B
-E_http2_push_T_pushable_data( Pc s
-, N l
-){  return ( E_text_Z_s_T_s0_starts( s, s + l, "<!DOCTYPE " )
-      && E_text_Z_s_T_s0_starts_case( s + 10, s + l, "html" )
-    )
-    || E_text_Z_s_T_s0_starts_case( s, s + l, "<html" );
-}
 N
 E_http2_push_I_parse_links( Pc req_path
 , Pc authority
