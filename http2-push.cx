@@ -99,7 +99,7 @@ Cont:   ;
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 I
-E_http2_push_Q_file_M( Pc *s
+E_http2_push_Q_tmp_file_M( Pc *s
 ){  int fd;
     Pc s_ = M( 34 + 1 );
     if( !s_ )
@@ -157,6 +157,7 @@ E_http2_push_I_entities_func_Z_html( struct E_text_syntax_Z_body *syntax
                 s_end = s_1;
             if( s != s_end
             && *( s_end - 1 ) != '/'
+            && !E_text_Z_s_T_s0_ends( s, s_end, ".html" )
             && !E_text_Z_s_T_s0_ends( s, s_end, ".php" )
             )
             {   E_http2_push_S_links[ E_http2_push_S_links_n ] = M( s_end - s + 1 );

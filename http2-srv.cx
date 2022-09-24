@@ -40,15 +40,463 @@ enum E_http2_srv_Z_frame_type_setting
 , E_http2_srv_Z_frame_type_setting_Z_max_frame_size
 , E_http2_srv_Z_frame_type_setting_Z_max_header_list_size
 };
+//------------------------------------------------------------------------------
+struct E_http2_srv_Z_push
+{ I stream_id;
+  Pc path;
+};
+struct E_http2_srv_Z_stream
+{ N32 stream_id;
+  S recv_window_size;
+  S send_window_size;
+  int file;
+  off_t file_size;
+  off_t l, first_l;
+  B end_stream;
+  pid_t child;
+  Pc *headers;
+  N headers_n;
+  Pc buf_headers;
+  N buf_headers_l;
+  Pc buf_post;
+  N buf_post_l;
+  I push_tmp_file;
+  Pc push_tmp_filename;
+  B data_start, data_end;
+  z_stream *z_stream;
+  Pc zlib_data;
+};
+struct E_http2_srv_Z_accept
+{ int poll_fd;
+  int listen_sock;
+  SSL *ssl;
+  struct sockaddr peer_addr;
+  Pc buf, buf_, buf_2, buf_2_;
+  N buf_l;
+  Z_clock_time keepalive_tv;
+  B preface;
+  N send_dynamic_table_size_max;
+  B send_dynamic_table_size_max_hit;
+  B push;
+  N concurrent_streams_max;
+  S recv_window_size;
+  S send_window_size;
+  N recv_frame_size_max;
+  N send_frame_size_max;
+  N header_list_size_max;
+  Pc *dynamic_table_dec;
+  N dynamic_table_dec_n;
+  Pc *dynamic_table_enc;
+  N dynamic_table_enc_n;
+  Pc authority;
+  struct E_mem_Q_tab_Z *stream;
+  N32 new_stream;
+  N32 new_push_stream;
+  N32 last_stream;
+} *E_http2_srv_S_accept;
+N E_http2_srv_S_accept_n;
 //==============================================================================
 N
-E_http2_srv_I_reply_code( N frame_stream
-, Pc *buffer
+E_http2_srv_Q_accept_M( SSL *ssl
+, int poll_fd
+, int listen_sock
+, struct sockaddr *peer_addr
+){  if( !E_mem_Q_blk_I_append( &E_http2_srv_S_accept, 1 ))
+        return ~0;
+    E_http2_srv_S_accept_n++;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].ssl = ssl;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].poll_fd = poll_fd;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].listen_sock = listen_sock;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].peer_addr = *peer_addr;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf_l = 0;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].preface = yes;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_dynamic_table_size_max = 4096; //CONF
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_dynamic_table_size_max_hit = no;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].push = no; //NDFN Domyślnie wyłączone, ponieważ przeglądarki nie akceptują.
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].concurrent_streams_max = (N32)~0 >> 1;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].recv_window_size = 1024 * 1024; //CONF
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_window_size = 65535; //CONF
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].recv_frame_size_max = 64 * 1024; //CONF
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_frame_size_max = 16384; //CONF
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].header_list_size_max = ~0;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].new_stream = 1;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].new_push_stream = 2;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].last_stream = ~0;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf = M( 9 + E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].recv_frame_size_max );
+    if( !E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf )
+    {   E_mem_Q_blk_I_remove( &E_http2_srv_S_accept, --E_http2_srv_S_accept_n, 1 );
+        return ~0;
+    }
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf_ = E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf_2 = M( 9 + E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_frame_size_max );
+    if( !E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf_2 )
+    {   W( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf );
+        E_mem_Q_blk_I_remove( &E_http2_srv_S_accept, --E_http2_srv_S_accept_n, 1 );
+        return ~0;
+    }
+    Mt_( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].dynamic_table_dec, 0 );
+    if( !E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].dynamic_table_dec )
+    {   W( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf_2 );
+        W( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf );
+        E_mem_Q_blk_I_remove( &E_http2_srv_S_accept, --E_http2_srv_S_accept_n, 1 );
+        return ~0;
+    }
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].dynamic_table_dec_n = 0;
+    Mt_( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].dynamic_table_enc, 0 );
+    if( !E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].dynamic_table_enc )
+    {   W( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].dynamic_table_dec );
+        W( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf_2 );
+        W( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf );
+        E_mem_Q_blk_I_remove( &E_http2_srv_S_accept, --E_http2_srv_S_accept_n, 1 );
+        return ~0;
+    }
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].dynamic_table_enc_n = 0;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].authority = 0;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].stream = E_mem_Q_tab_M( sizeof( struct E_http2_srv_Z_stream ), 0 );
+    if( !E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].stream )
+    {   W( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].dynamic_table_enc );
+        W( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].dynamic_table_dec );
+        W( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf_2 );
+        W( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf );
+        E_mem_Q_blk_I_remove( &E_http2_srv_S_accept, --E_http2_srv_S_accept_n, 1 );
+        return ~0;
+    }
+    return 0;
+}
+void
+E_http2_srv_Q_accept_W_1( N i
+){  if( E_http2_srv_S_accept[i].ssl )
+    {   SSL_shutdown( E_http2_srv_S_accept[i].ssl );
+        SSL_free( E_http2_srv_S_accept[i].ssl );
+    }
+    E_http2_srv_Q_accept_W_2(i);
+}
+void
+E_http2_srv_Q_accept_W_2( N i
+){  W( E_http2_srv_S_accept[i].dynamic_table_dec );
+    W( E_http2_srv_S_accept[i].dynamic_table_enc );
+    if( E_http2_srv_S_accept[i].authority )
+        W( E_http2_srv_S_accept[i].authority );
+    for_each( stream_id, E_http2_srv_S_accept[i].stream, E_mem_Q_tab )
+    {   struct E_http2_srv_Z_stream *stream = E_mem_Q_tab_R( E_http2_srv_S_accept[i].stream, stream_id );
+        if( stream->headers )
+        {   for_n( j, stream->headers_n )
+                W( stream->headers[j] );
+            W( stream->headers );
+        }
+        if( stream->file != -1 )
+        {   V0( close( stream->file )){}
+        }
+        if( ~stream->push_tmp_file )
+        {   E_mem_Q_file_W_nosave( stream->push_tmp_file );
+            V0( unlink( stream->push_tmp_filename )){}
+            W( stream->push_tmp_filename );
+        }
+        if( stream->child != -1 )
+        {   V0( kill( stream->child, SIGTERM )){}
+        }
+        if( stream->buf_headers )
+            W( stream->buf_headers );
+        if( stream->buf_post )
+            W( stream->buf_post );
+        if( stream->z_stream )
+        {   inflateEnd( stream->z_stream );
+            W( stream->z_stream );
+            W( stream->zlib_data );
+        }
+    }
+    E_mem_Q_tab_W( E_http2_srv_S_accept[i].stream );
+    W( E_http2_srv_S_accept[i].buf_2 );
+    if( E_http2_srv_S_accept[i].buf )
+        W( E_http2_srv_S_accept[i].buf );
+    V0( close( E_http2_srv_S_accept[i].listen_sock )){}
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void
+E_http2_srv_I_php_cgi_M( B post
+, N srv_i
+, N accept_i
+, struct E_http2_srv_Z_stream *stream
+, Pc path
+, N path_uri_i
+, N path_uri_end_i
+, Pc query
+){  N environ_n = 27 + ( post ? 2 : 0 );
+    N environ_i = 0;
+    Mt_( environ, environ_n );
+    if( !environ )
+    {   G_(); V();
+    }
+    environ[ environ_i++ ] = "GATEWAY_INTERFACE=CGI/1.1";
+    N l_1 = E_text_Z_n_N_s_G( E_conf_S_bind[ E_srv_S_srv[ srv_i ].bind_i ].port, sizeof( E_conf_S_bind[ E_srv_S_srv[ srv_i ].bind_i ].port ), 10 );
+    N l = E_text_Z_s0_R_l( "SERVER_PORT=" ) + l_1 + 1;
+    Pc s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    Pc s_1 = E_text_Z_s_P_s0_copy( s, "SERVER_PORT=" );
+    E_text_Z_n_N_s( s_1 + l_1, E_conf_S_bind[ E_srv_S_srv[ srv_i ].bind_i ].port, sizeof( E_conf_S_bind[ E_srv_S_srv[ srv_i ].bind_i ].port ), 10 );
+    *( s_1 + l_1 ) = '\0';
+    environ[ environ_i++ ] = s;
+    l = E_text_Z_s0_R_l( "SERVER_NAME=" ) + E_text_Z_s0_R_l( E_srv_S_srv[ srv_i ].canonical ) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "SERVER_NAME=" ), E_srv_S_srv[ srv_i ].canonical );
+    environ[ environ_i++ ] = s;
+    environ[ environ_i++ ] = "SERVER_SOFTWARE=" S_server_name;
+    environ[ environ_i++ ] = "SERVER_PROTOCOL=HTTP/1.1";
+    Pc h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, ":method" );
+    l = E_text_Z_s0_R_l( "REQUEST_METHOD=" ) + E_text_Z_s0_R_l(h) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "REQUEST_METHOD=" ), h );
+    environ[ environ_i++ ] = s;
+    l = E_text_Z_s0_R_l( "QUERY_STRING=" ) + ( query ? E_text_Z_s0_R_l(query) : 0 ) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    s_1 = E_text_Z_s_P_s0_copy( s, "QUERY_STRING=" );
+    if(query)
+        E_text_Z_s_P_s0_copy_0( s_1, query );
+    else
+        *s_1 = '\0';
+    environ[ environ_i++ ] = s;
+    h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, "accept" );
+    l = E_text_Z_s0_R_l( "HTTP_ACCEPT=" ) + ( h ? E_text_Z_s0_R_l(h) : 0 ) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_ACCEPT=" );
+    if(h)
+        E_text_Z_s_P_s0_copy_0( s_1, h );
+    else
+        *s_1 = '\0';
+    environ[ environ_i++ ] = s;
+    h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, "accept-charset" );
+    l = E_text_Z_s0_R_l( "HTTP_ACCEPT_CHARSET=" ) + ( h ? E_text_Z_s0_R_l(h) : 0 ) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_ACCEPT_CHARSET=" );
+    if(h)
+        E_text_Z_s_P_s0_copy_0( s_1, h );
+    else
+        *s_1 = '\0';
+    environ[ environ_i++ ] = s;
+    h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, "accept-encoding" );
+    l = E_text_Z_s0_R_l( "HTTP_ACCEPT_ENCODING=" ) + ( h ? E_text_Z_s0_R_l(h) : 0 ) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_ACCEPT_ENCODING=" );
+    if(h)
+        E_text_Z_s_P_s0_copy_0( s_1, h );
+    else
+        *s_1 = '\0';
+    environ[ environ_i++ ] = s;
+    h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, "accept-language" );
+    l = E_text_Z_s0_R_l( "HTTP_ACCEPT_LANGUAGE=" ) + ( h ? E_text_Z_s0_R_l(h) : 0 ) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_ACCEPT_LANGUAGE=" );
+    if(h)
+        E_text_Z_s_P_s0_copy_0( s_1, h );
+    else
+        *s_1 = '\0';
+    environ[ environ_i++ ] = s;
+    h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, "connection" );
+    l = E_text_Z_s0_R_l( "HTTP_CONNECTION=" ) + ( h ? E_text_Z_s0_R_l(h) : 0 ) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_CONNECTION=" );
+    if(h)
+        E_text_Z_s_P_s0_copy_0( s_1, h );
+    else
+        *s_1 = '\0';
+    environ[ environ_i++ ] = s;
+    l = E_text_Z_s0_R_l( "HTTP_COOKIE=" ) + 1;
+    N cookie_i = 0;
+    if( h = E_net_cli_Q_headers_R_i( stream->headers, stream->headers_n, "cookie", cookie_i++ ))
+        l += E_text_Z_s0_R_l(h);
+    while( h = E_net_cli_Q_headers_R_i( stream->headers, stream->headers_n, "cookie", cookie_i++ ))
+        l += 2 + E_text_Z_s0_R_l(h);
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_COOKIE=" );
+    cookie_i = 0;
+    if( h = E_net_cli_Q_headers_R_i( stream->headers, stream->headers_n, "cookie", cookie_i++ ))
+        s_1 = E_text_Z_s_P_s0_copy( s_1, h );
+    while( h = E_net_cli_Q_headers_R_i( stream->headers, stream->headers_n, "cookie", cookie_i++ ))
+        s_1 = E_text_Z_s_P_s0_copy( E_text_Z_s_P_s0_copy( s_1, "; " ), h );
+    *s_1 = '\0';
+    environ[ environ_i++ ] = s;
+    h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, ":authority" );
+    if( !h )
+        h = E_http2_srv_S_accept[ accept_i ].authority;
+    l = E_text_Z_s0_R_l( "HTTP_HOST=" ) + E_text_Z_s0_R_l(h) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_HOST=" );
+    E_text_Z_s_P_s0_copy_0( s_1, h );
+    environ[ environ_i++ ] = s;
+    h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, "referer" );
+    l = E_text_Z_s0_R_l( "HTTP_REFERER=" ) + ( h ? E_text_Z_s0_R_l(h) : 0 ) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_REFERER=" );
+    if(h)
+        E_text_Z_s_P_s0_copy_0( s_1, h );
+    else
+        *s_1 = '\0';
+    environ[ environ_i++ ] = s;
+    h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, "user-agent" );
+    l = E_text_Z_s0_R_l( "HTTP_USER_AGENT=" ) + ( h ? E_text_Z_s0_R_l(h) : 0 ) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_USER_AGENT=" );
+    if(h)
+        E_text_Z_s_P_s0_copy_0( s_1, h );
+    else
+        *s_1 = '\0';
+    environ[ environ_i++ ] = s;
+    l = E_text_Z_s0_R_l( "HTTPS=" ) + 1 + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "HTTPS=" ),  "1" );
+    environ[ environ_i++ ] = s;
+    Pc ip;
+    N16 port;
+    if( E_http2_srv_S_accept[ accept_i ].peer_addr.sa_family == AF_INET )
+    {   ip = M( INET_ADDRSTRLEN + 1 );
+        if( !ip )
+        {   G_(); V();
+        }
+        E_mem_Q_blk_P_fill_c( ip, INET_ADDRSTRLEN + 1, 0 );
+        struct sockaddr_in *sa = (P)&E_http2_srv_S_accept[ accept_i ].peer_addr;
+        Vp_( inet_ntop( E_http2_srv_S_accept[ accept_i ].peer_addr.sa_family, &sa->sin_addr, ip, INET_ADDRSTRLEN ));
+        port = ntohs( sa->sin_port );
+    }else
+    {   ip = M( INET6_ADDRSTRLEN + 1 );
+        if( !ip )
+        {   G_(); V();
+        }
+        E_mem_Q_blk_P_fill_c( ip, INET6_ADDRSTRLEN + 1, 0 );
+        struct sockaddr_in6 *sa = (P)&E_http2_srv_S_accept[ accept_i ].peer_addr;
+        Vp_( inet_ntop( E_http2_srv_S_accept[ accept_i ].peer_addr.sa_family, &sa->sin6_addr, ip, INET6_ADDRSTRLEN ));
+        port = ntohs( sa->sin6_port );
+    }
+    G_(); Gd( accept_i ); Gs0(ip);
+    l = E_text_Z_s0_R_l( "REMOTE_ADDR=" ) + E_text_Z_s0_R_l(ip) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "REMOTE_ADDR=" ), ip );
+    environ[ environ_i++ ] = s;
+    l = E_text_Z_s0_R_l( "REMOTE_HOST=" ) + E_text_Z_s0_R_l(ip) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "REMOTE_HOST=" ), ip );
+    environ[ environ_i++ ] = s;
+    environ[ environ_i++ ] = "AUTH_TYPE=";
+    environ[ environ_i++ ] = "PATH_INFO=";
+    N port_l = E_text_Z_n_N_s_G( port, sizeof(port), 10 );
+    l = E_text_Z_s0_R_l( "REMOTE_PORT=" ) + port_l + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    E_text_Z_s_P_s0_copy( s, "REMOTE_PORT=" );
+    E_text_Z_n_N_s( s + E_text_Z_s0_R_l( "REMOTE_PORT=" ) + port_l, port, sizeof(port), 10 );
+    *( s + E_text_Z_s0_R_l( "REMOTE_PORT=" ) + port_l ) = '\0';
+    environ[ environ_i++ ] = s;
+    l = E_text_Z_s0_R_l( "REQUEST_URI=" ) + path_uri_end_i - path_uri_i + ( query ? 1 + E_text_Z_s0_R_l(query) : 0 ) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    s_1 = E_text_Z_s_P_s_copy( E_text_Z_s_P_s0_copy( s, "REQUEST_URI=" ), path + path_uri_i, path + path_uri_end_i );
+    if(query)
+    {   *s_1++ = '?';
+        E_text_Z_s_P_s0_copy_0( s_1, query );
+    }else
+        *s_1 = '\0';
+    environ[ environ_i++ ] = s;
+    environ[ environ_i++ ] = "REDIRECT_STATUS=200";
+    l = E_text_Z_s0_R_l( "SCRIPT_FILENAME=" ) + E_text_Z_s0_R_l(path) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "SCRIPT_FILENAME=" ), path );
+    environ[ environ_i++ ] = s;
+    l = E_text_Z_s0_R_l( "SCRIPT_NAME=" ) + E_text_Z_s0_R_l( path + path_uri_i ) + 1;
+    s = M(l);
+    if( !s )
+    {   G_(); V();
+    }
+    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "SCRIPT_NAME=" ), path + path_uri_i );
+    environ[ environ_i++ ] = s;
+    if(post)
+    {   h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, "content-type" );
+        l = E_text_Z_s0_R_l( "CONTENT_TYPE=" ) + E_text_Z_s0_R_l(h) + 1;
+        s = M(l);
+        if( !s )
+        {   G_(); V();
+        }
+        E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "CONTENT_TYPE=" ), h );
+        environ[ environ_i++ ] = s;
+        N l_1 = E_text_Z_n_N_s_G( stream->buf_post_l, sizeof( stream->buf_post_l ), 10 );
+        l = E_text_Z_s0_R_l( "CONTENT_LENGTH=" ) + l_1 + 1;
+        s = M(l);
+        if( !s )
+        {   G_(); V();
+        }
+        E_text_Z_s_P_s0_copy( s, "CONTENT_LENGTH=" );
+        E_text_Z_n_N_s( s + E_text_Z_s0_R_l( "CONTENT_LENGTH=" ) + l_1, stream->buf_post_l, sizeof( stream->buf_post_l ), 10 );
+        *( s + E_text_Z_s0_R_l( "CONTENT_LENGTH=" ) + l_1 ) = '\0';
+        environ[ environ_i++ ] = s;
+        int tmp_pipe[2];
+        V0_( pipe( &tmp_pipe[0] ));
+        VO1_( dup2( tmp_pipe[0], STDIN_FILENO ));
+        V0_( close( tmp_pipe[0] ));
+        E_net_cli_I_write_data( 0, tmp_pipe[1], stream->buf_post, stream->buf_post_l );
+        V0_( close( tmp_pipe[1] ));
+    }else
+    {   V0_( close( STDIN_FILENO ));
+    }
+    environ[ environ_i ] = 0;
+    J_assert( environ_i == environ_n - 1 );
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+N
+E_http2_srv_I_reply_code( N accept_i
+, N frame_stream
 , N code
-, Pc **dynamic_table
-, N *dynamic_table_n
-, N dynamic_table_size_max
-, B *dynamic_table_size_max_hit
 ){  G_(); Gd(code);
     Pc *Mt_( headers, 1 );
     if( !headers )
@@ -61,16 +509,16 @@ E_http2_srv_I_reply_code( N frame_stream
     Pc s = E_text_Z_s_P_s0_copy( headers[0], ":status: " );
     E_text_Z_n_N_s( s + 3, code, sizeof(code), 10 );
     *( s + 3 ) = '\0';
-    Pc buffer_ = *buffer + 9;
-    if( !~E_net_http2_Q_buffer_I_write_headers( &buffer_, headers, 1, dynamic_table, dynamic_table_n, dynamic_table_size_max, dynamic_table_size_max_hit ))
+    Pc buffer_ = E_http2_srv_S_accept[ accept_i ].buf_2_ + 9;
+    if( !~E_net_http2_Q_buffer_I_write_headers( &buffer_, headers, 1, &E_http2_srv_S_accept[ accept_i ].dynamic_table_enc, &E_http2_srv_S_accept[ accept_i ].dynamic_table_enc_n, E_http2_srv_S_accept[ accept_i ].send_dynamic_table_size_max, &E_http2_srv_S_accept[ accept_i ].send_dynamic_table_size_max_hit ))
     {   W( headers[0] );
         W(headers);
         return ~0;
     }
     W( headers[0] );
     W(headers);
-    E_net_http2_Q_buffer_I_write_frame_header( buffer, buffer_ - 9 - *buffer, E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream | E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers, frame_stream );
-    *buffer = buffer_;
+    E_net_http2_Q_buffer_I_write_frame_header( &E_http2_srv_S_accept[ accept_i ].buf_2_, buffer_ - 9 - E_http2_srv_S_accept[ accept_i ].buf_2_, E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream | E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers, frame_stream );
+    E_http2_srv_S_accept[ accept_i ].buf_2_ = buffer_;
     return 0;
 }
 /******************************************************************************/
