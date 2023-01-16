@@ -234,7 +234,7 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    Pc s_1 = E_text_Z_s_P_s0_copy( s, "SERVER_PORT=" );
+    Pc s_1 = E_text_Z_s_P_copy_s0( s, "SERVER_PORT=" );
     E_text_Z_n_N_s( s_1 + l_1, E_conf_S_bind[ E_srv_S_srv[ srv_i ].bind_i ].port, sizeof( E_conf_S_bind[ E_srv_S_srv[ srv_i ].bind_i ].port ), 10 );
     *( s_1 + l_1 ) = '\0';
     environ[ environ_i++ ] = s;
@@ -243,7 +243,7 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "SERVER_NAME=" ), E_srv_S_srv[ srv_i ].canonical );
+    E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( s, "SERVER_NAME=" ), E_srv_S_srv[ srv_i ].canonical );
     environ[ environ_i++ ] = s;
     environ[ environ_i++ ] = "SERVER_SOFTWARE=" S_server_name;
     environ[ environ_i++ ] = "SERVER_PROTOCOL=HTTP/1.1";
@@ -253,16 +253,16 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "REQUEST_METHOD=" ), h );
+    E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( s, "REQUEST_METHOD=" ), h );
     environ[ environ_i++ ] = s;
     l = E_text_Z_s0_R_l( "QUERY_STRING=" ) + ( query ? E_text_Z_s0_R_l(query) : 0 ) + 1;
     s = M(l);
     if( !s )
     {   G_(); V();
     }
-    s_1 = E_text_Z_s_P_s0_copy( s, "QUERY_STRING=" );
+    s_1 = E_text_Z_s_P_copy_s0( s, "QUERY_STRING=" );
     if(query)
-        E_text_Z_s_P_s0_copy_0( s_1, query );
+        E_text_Z_s_P_copy_s0_0( s_1, query );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -272,9 +272,9 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_ACCEPT=" );
+    s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_ACCEPT=" );
     if(h)
-        E_text_Z_s_P_s0_copy_0( s_1, h );
+        E_text_Z_s_P_copy_s0_0( s_1, h );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -284,9 +284,9 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_ACCEPT_CHARSET=" );
+    s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_ACCEPT_CHARSET=" );
     if(h)
-        E_text_Z_s_P_s0_copy_0( s_1, h );
+        E_text_Z_s_P_copy_s0_0( s_1, h );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -296,9 +296,9 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_ACCEPT_ENCODING=" );
+    s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_ACCEPT_ENCODING=" );
     if(h)
-        E_text_Z_s_P_s0_copy_0( s_1, h );
+        E_text_Z_s_P_copy_s0_0( s_1, h );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -308,9 +308,9 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_ACCEPT_LANGUAGE=" );
+    s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_ACCEPT_LANGUAGE=" );
     if(h)
-        E_text_Z_s_P_s0_copy_0( s_1, h );
+        E_text_Z_s_P_copy_s0_0( s_1, h );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -320,9 +320,9 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_CONNECTION=" );
+    s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_CONNECTION=" );
     if(h)
-        E_text_Z_s_P_s0_copy_0( s_1, h );
+        E_text_Z_s_P_copy_s0_0( s_1, h );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -336,12 +336,12 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_COOKIE=" );
+    s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_COOKIE=" );
     cookie_i = 0;
     if( h = E_net_cli_Q_headers_R_i( stream->headers, stream->headers_n, "cookie", cookie_i++ ))
-        s_1 = E_text_Z_s_P_s0_copy( s_1, h );
+        s_1 = E_text_Z_s_P_copy_s0( s_1, h );
     while( h = E_net_cli_Q_headers_R_i( stream->headers, stream->headers_n, "cookie", cookie_i++ ))
-        s_1 = E_text_Z_s_P_s0_copy( E_text_Z_s_P_s0_copy( s_1, "; " ), h );
+        s_1 = E_text_Z_s_P_copy_s0( E_text_Z_s_P_copy_s0( s_1, "; " ), h );
     *s_1 = '\0';
     environ[ environ_i++ ] = s;
     h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, ":authority" );
@@ -352,8 +352,8 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_HOST=" );
-    E_text_Z_s_P_s0_copy_0( s_1, h );
+    s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_HOST=" );
+    E_text_Z_s_P_copy_s0_0( s_1, h );
     environ[ environ_i++ ] = s;
     h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, "referer" );
     l = E_text_Z_s0_R_l( "HTTP_REFERER=" ) + ( h ? E_text_Z_s0_R_l(h) : 0 ) + 1;
@@ -361,9 +361,9 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_REFERER=" );
+    s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_REFERER=" );
     if(h)
-        E_text_Z_s_P_s0_copy_0( s_1, h );
+        E_text_Z_s_P_copy_s0_0( s_1, h );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -373,9 +373,9 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    s_1 = E_text_Z_s_P_s0_copy( s, "HTTP_USER_AGENT=" );
+    s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_USER_AGENT=" );
     if(h)
-        E_text_Z_s_P_s0_copy_0( s_1, h );
+        E_text_Z_s_P_copy_s0_0( s_1, h );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -384,7 +384,7 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "HTTPS=" ),  "1" );
+    E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( s, "HTTPS=" ),  "1" );
     environ[ environ_i++ ] = s;
     Pc ip;
     N16 port;
@@ -413,14 +413,14 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "REMOTE_ADDR=" ), ip );
+    E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( s, "REMOTE_ADDR=" ), ip );
     environ[ environ_i++ ] = s;
     l = E_text_Z_s0_R_l( "REMOTE_HOST=" ) + E_text_Z_s0_R_l(ip) + 1;
     s = M(l);
     if( !s )
     {   G_(); V();
     }
-    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "REMOTE_HOST=" ), ip );
+    E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( s, "REMOTE_HOST=" ), ip );
     environ[ environ_i++ ] = s;
     environ[ environ_i++ ] = "AUTH_TYPE=";
     environ[ environ_i++ ] = "PATH_INFO=";
@@ -430,7 +430,7 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    E_text_Z_s_P_s0_copy( s, "REMOTE_PORT=" );
+    E_text_Z_s_P_copy_s0( s, "REMOTE_PORT=" );
     E_text_Z_n_N_s( s + E_text_Z_s0_R_l( "REMOTE_PORT=" ) + port_l, port, sizeof(port), 10 );
     *( s + E_text_Z_s0_R_l( "REMOTE_PORT=" ) + port_l ) = '\0';
     environ[ environ_i++ ] = s;
@@ -439,10 +439,10 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    s_1 = E_text_Z_s_P_s_copy( E_text_Z_s_P_s0_copy( s, "REQUEST_URI=" ), path + path_uri_i, path + path_uri_end_i );
+    s_1 = E_text_Z_s_P_copy_s( E_text_Z_s_P_copy_s0( s, "REQUEST_URI=" ), path + path_uri_i, path + path_uri_end_i );
     if(query)
     {   *s_1++ = '?';
-        E_text_Z_s_P_s0_copy_0( s_1, query );
+        E_text_Z_s_P_copy_s0_0( s_1, query );
     }else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -452,14 +452,14 @@ E_http2_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "SCRIPT_FILENAME=" ), path );
+    E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( s, "SCRIPT_FILENAME=" ), path );
     environ[ environ_i++ ] = s;
     l = E_text_Z_s0_R_l( "SCRIPT_NAME=" ) + E_text_Z_s0_R_l( path + path_uri_i ) + 1;
     s = M(l);
     if( !s )
     {   G_(); V();
     }
-    E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "SCRIPT_NAME=" ), path + path_uri_i );
+    E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( s, "SCRIPT_NAME=" ), path + path_uri_i );
     environ[ environ_i++ ] = s;
     if(post)
     {   h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, "content-type" );
@@ -468,7 +468,7 @@ E_http2_srv_I_php_cgi_M( B post
         if( !s )
         {   G_(); V();
         }
-        E_text_Z_s_P_s0_copy_0( E_text_Z_s_P_s0_copy( s, "CONTENT_TYPE=" ), h );
+        E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( s, "CONTENT_TYPE=" ), h );
         environ[ environ_i++ ] = s;
         N l_1 = E_text_Z_n_N_s_G( stream->buf_post_l, sizeof( stream->buf_post_l ), 10 );
         l = E_text_Z_s0_R_l( "CONTENT_LENGTH=" ) + l_1 + 1;
@@ -476,7 +476,7 @@ E_http2_srv_I_php_cgi_M( B post
         if( !s )
         {   G_(); V();
         }
-        E_text_Z_s_P_s0_copy( s, "CONTENT_LENGTH=" );
+        E_text_Z_s_P_copy_s0( s, "CONTENT_LENGTH=" );
         E_text_Z_n_N_s( s + E_text_Z_s0_R_l( "CONTENT_LENGTH=" ) + l_1, stream->buf_post_l, sizeof( stream->buf_post_l ), 10 );
         *( s + E_text_Z_s0_R_l( "CONTENT_LENGTH=" ) + l_1 ) = '\0';
         environ[ environ_i++ ] = s;
@@ -506,7 +506,7 @@ E_http2_srv_I_reply_code( N accept_i
     {   W(headers);
         return ~0;
     }
-    Pc s = E_text_Z_s_P_s0_copy( headers[0], ":status: " );
+    Pc s = E_text_Z_s_P_copy_s0( headers[0], ":status: " );
     E_text_Z_n_N_s( s + 3, code, sizeof(code), 10 );
     *( s + 3 ) = '\0';
     Pc buffer_ = E_http2_srv_S_accept[ accept_i ].buf_2_ + 9;

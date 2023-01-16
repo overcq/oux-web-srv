@@ -35,14 +35,14 @@ N E_conf_S_bind_n = 0;
 //==============================================================================
 N
 E_conf_I_read_I_b( Pc s
-){  if( E_text_Z_s0_T_s0_eq( s, "1" )
-    || E_text_Z_s0_T_s0_eq_case( s, "on" )
-    || E_text_Z_s0_T_s0_eq_case( s, "yes" )
+){  if( E_text_Z_s0_T_eq_s0( s, "1" )
+    || E_text_Z_s0_T_eq_case_s0( s, "on" )
+    || E_text_Z_s0_T_eq_case_s0( s, "yes" )
     )
         return yes;
-    if( E_text_Z_s0_T_s0_eq( s, "0" )
-    || E_text_Z_s0_T_s0_eq_case( s, "off" )
-    || E_text_Z_s0_T_s0_eq_case( s, "no" )
+    if( E_text_Z_s0_T_eq_s0( s, "0" )
+    || E_text_Z_s0_T_eq_case_s0( s, "off" )
+    || E_text_Z_s0_T_eq_case_s0( s, "no" )
     )
         return no;
     return ~0;
@@ -50,7 +50,7 @@ E_conf_I_read_I_b( Pc s
 N
 E_conf_Z_s0_Z_path_P_normalize( Pc *s
 ){  Pc s_1 = *s, s_2;
-    O{  s_2 = E_text_Z_s0_R_c_search( s_1, E_mem_Q_file_S_filename_separator );
+    O{  s_2 = E_text_Z_s0_R_search_c( s_1, E_mem_Q_file_S_filename_separator );
         if( !*s_2 )
             break;
         if( s_2 == s_1 + 1 )
@@ -89,41 +89,41 @@ entities_func( struct E_text_syntax_Z_body *syntax
     }else if( state[ state_n - 1 ].entities_i == entities_root_path )
     {   if( E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost[ E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost_n - 1 ].root_path )
             return ~0;
-        N l = E_text_Z_s0_R_0_l( state[ state_n - 1 ].s );
+        N l = E_text_Z_s0_R_l_0( state[ state_n - 1 ].s );
         Pc s = M(l);
         if( !s )
             return ~0;
-        E_text_Z_s_P_s0_copy_0( s, state[ state_n - 1 ].s );
+        E_text_Z_s_P_copy_s0_0( s, state[ state_n - 1 ].s );
         if( E_conf_Z_s0_Z_path_P_normalize( &s ))
             return ~0;
         E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost[ E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost_n - 1 ].root_path = s;
         N path_n = 1;
-        while( *( s = E_text_Z_s0_R_c_search( s + 1, '/' )))
+        while( *( s = E_text_Z_s0_R_search_c( s + 1, '/' )))
             path_n++;
         E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost[ E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost_n - 1 ].root_path_n = path_n;
     }else if( state[ state_n - 1 ].entities_i == entities_host )
     {   if( E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost[ E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost_n - 1 ].host )
             return ~0;
-        N l = E_text_Z_s0_R_0_l( state[ state_n - 1 ].s );
+        N l = E_text_Z_s0_R_l_0( state[ state_n - 1 ].s );
         Pc s = M(l);
         if( !s )
             return ~0;
-        E_text_Z_s_P_s0_copy_0( s, state[ state_n - 1 ].s );
+        E_text_Z_s_P_copy_s0_0( s, state[ state_n - 1 ].s );
         E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost[ E_conf_S_bind[ E_conf_S_bind_n - 1 ].virtualhost_n - 1 ].host = s;
     }else if( state[ state_n - 1 ].entities_i == entities_ip )
     {   if( E_conf_S_bind[ E_conf_S_bind_n - 1 ].ip )
             return ~0;
-        N l = E_text_Z_s0_R_0_l( state[ state_n - 1 ].s );
+        N l = E_text_Z_s0_R_l_0( state[ state_n - 1 ].s );
         Pc s = M(l);
         if( !s )
             return ~0;
-        E_text_Z_s_P_s0_copy_0( s, state[ state_n - 1 ].s );
+        E_text_Z_s_P_copy_s0_0( s, state[ state_n - 1 ].s );
         E_conf_S_bind[ E_conf_S_bind_n - 1 ].ip = s;
     }
     else if( state[ state_n - 1 ].entities_i == entities_port )
     {   if( E_conf_S_bind[ E_conf_S_bind_n - 1 ].port )
             return ~0;
-        N l = E_text_Z_s0_R_0_l( state[ state_n - 1 ].s );
+        N l = E_text_Z_s0_R_l_0( state[ state_n - 1 ].s );
         Pc ret_s;
         N port = E_text_Z_s_N_n( state[ state_n - 1 ].s, state[ state_n - 1 ].s + l - 1, &ret_s, 10 );
         if( ret_s != state[ state_n - 1 ].s + l - 1
@@ -138,22 +138,22 @@ entities_func( struct E_text_syntax_Z_body *syntax
     }else if( state[ state_n - 1 ].entities_i == entities_certificate )
     {   if( E_conf_S_bind[ E_conf_S_bind_n - 1 ].certificate_path )
             return ~0;
-        N l = E_text_Z_s0_R_0_l( state[ state_n - 1 ].s );
+        N l = E_text_Z_s0_R_l_0( state[ state_n - 1 ].s );
         Pc s = M(l);
         if( !s )
             return ~0;
-        E_text_Z_s_P_s0_copy_0( s, state[ state_n - 1 ].s );
+        E_text_Z_s_P_copy_s0_0( s, state[ state_n - 1 ].s );
         if( E_conf_Z_s0_Z_path_P_normalize( &s ))
             return ~0;
         E_conf_S_bind[ E_conf_S_bind_n - 1 ].certificate_path = s;
     }else if( state[ state_n - 1 ].entities_i == entities_private_key )
     {   if( E_conf_S_bind[ E_conf_S_bind_n - 1 ].private_key_path )
             return ~0;
-        N l = E_text_Z_s0_R_0_l( state[ state_n - 1 ].s );
+        N l = E_text_Z_s0_R_l_0( state[ state_n - 1 ].s );
         Pc s = M(l);
         if( !s )
             return ~0;
-        E_text_Z_s_P_s0_copy_0( s, state[ state_n - 1 ].s );
+        E_text_Z_s_P_copy_s0_0( s, state[ state_n - 1 ].s );
         if( E_conf_Z_s0_Z_path_P_normalize( &s ))
             return ~0;
         E_conf_S_bind[ E_conf_S_bind_n - 1 ].private_key_path = s;
@@ -163,19 +163,24 @@ entities_func( struct E_text_syntax_Z_body *syntax
 //------------------------------------------------------------------------------
 N
 E_conf_I_read( I conf_file
-){  I syntax_file = E_mem_Q_file_M( "conf.syntax", yes, 0 );
+){
+G_();
+    I syntax_file = E_mem_Q_file_M( "conf.syntax", yes, 0 );
     if( !~syntax_file )
         return ~0;
+G_();
     struct E_text_syntax_Z_body *syntax;
     if( E_text_syntax_M( syntax_file, &syntax ))
     {   E_mem_Q_file_W( syntax_file );
         return ~0;
     }
+G_();
     E_mem_Q_file_W( syntax_file );
     struct E_text_syntax_Z_state *state;
     N state_n;
     if( !~E_text_syntax_Q_state_M( syntax, &state, &state_n ))
         return ~0;
+G_();
     entities_bind = E_text_syntax_R_entity_by_name( syntax, "bind name" );
     entities_ip = E_text_syntax_R_entity_by_name( syntax, "ip" );
     entities_port = E_text_syntax_R_entity_by_name( syntax, "port" );
@@ -199,16 +204,19 @@ E_conf_I_read( I conf_file
     {   E_text_syntax_Q_state_W( state, state_n );
         return ~0;
     }
+G_();
     N ret = E_text_syntax_Q_state_I_parse( conf_file, syntax, &state, &state_n, entities_func );
     if( !~ret )
     {   E_text_syntax_Q_state_W( state, state_n );
         E_text_syntax_W(syntax);
         return ~0;
     }
+G_();
     E_text_syntax_Q_state_W( state, state_n );
     E_text_syntax_W(syntax);
     if( !E_conf_S_bind_n )
         return ~0;
+G_();
     for_n( i, E_conf_S_bind_n )
     {   if( !E_conf_S_bind[i].ip
         || !E_conf_S_bind[i].port
