@@ -895,7 +895,7 @@ End:            ;
                     E_http_srv_S_accept[i].buf_ += post_l;
                     E_http_srv_S_accept[i].buf_l -= post_l;
                 }
-                B php = E_text_Z_s0_T_s0_ends( path, ".php" );
+                B php = E_text_Z_s0_T_ends_s0( path, ".php" );
                 if(php)
                 {   gz = no; // Nie obsługuje kompresji strumienia PHP.
                     V0( access( path, F_OK ))
@@ -944,7 +944,7 @@ End:            ;
                     W(args);
                     V0( close( E_srv_S_subprocess_pipe[1] )){}
                 }else if( !gz
-                || E_text_Z_s0_T_s0_ends( path, ".gz" )
+                || E_text_Z_s0_T_ends_s0( path, ".gz" )
                 )
                 {   gz = no;
                     V1( E_http_srv_S_accept[i].file = open( path, O_RDONLY ))
@@ -1464,8 +1464,8 @@ End3:                           ;
                                     )
                                         gz = yes;
                                     if( gz
-                                    && !E_text_Z_s0_T_s0_ends( E_http2_push_S_links[m], ".php" )
-                                    && !E_text_Z_s0_T_s0_ends( E_http2_push_S_links[m], ".gz" )
+                                    && !E_text_Z_s0_T_ends_s0( E_http2_push_S_links[m], ".php" )
+                                    && !E_text_Z_s0_T_ends_s0( E_http2_push_S_links[m], ".gz" )
                                     )
                                     {   Pc s = E_mem_Q_blk_I_append( &E_http2_push_S_links[m], 3 );
                                         if( !s )
@@ -2278,7 +2278,7 @@ Http2_srv:                      ;
                                     }
                                 }
                                 G_(); Gd(i); Gs0(path);
-                                B php = E_text_Z_s0_T_s0_ends( path, ".php" );
+                                B php = E_text_Z_s0_T_ends_s0( path, ".php" );
                                 if(php)
                                 {   gz = no; // Nie obsługuje kompresji strumienia PHP.
                                     V0( access( path, F_OK ))
@@ -2674,8 +2674,8 @@ End4:                                                   ;
                                                             )
                                                                 gz = yes;
                                                             if( gz
-                                                            && !E_text_Z_s0_T_s0_ends( E_http2_push_S_links[m], ".php" )
-                                                            && !E_text_Z_s0_T_s0_ends( E_http2_push_S_links[m], ".gz" )
+                                                            && !E_text_Z_s0_T_ends_s0( E_http2_push_S_links[m], ".php" )
+                                                            && !E_text_Z_s0_T_ends_s0( E_http2_push_S_links[m], ".gz" )
                                                             )
                                                             {   Pc s = E_mem_Q_blk_I_append( &E_http2_push_S_links[m], 3 );
                                                                 if( !s )
@@ -3075,7 +3075,7 @@ End4:                                                   ;
                                     }
                                     E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( headers[ headers_i ], "server: " ), S_server_name );
                                     if( !gz
-                                    || E_text_Z_s0_T_s0_ends( path, ".gz" )
+                                    || E_text_Z_s0_T_ends_s0( path, ".gz" )
                                     )
                                     {   gz = no;
                                         V1( stream->file = open( path, O_RDONLY ))
