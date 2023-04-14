@@ -1665,7 +1665,7 @@ End3:                           ;
                                         goto End2_2;
                                     }
                                     E_text_Z_n_N_s( s + l, stat.st_size, sizeof( stat.st_size ), 10 );
-                                    E_text_Z_s_P_s_copy_0( E_text_Z_s_P_copy_s0( headers[ headers_i ], "content-length: " ), s, s + l );
+                                    E_text_Z_s_P_copy_s_0( E_text_Z_s_P_copy_s0( headers[ headers_i ], "content-length: " ), s, s + l );
                                     W(s);
                                     N cookie_i = 0;
                                     while( h = E_net_cli_Q_headers_R_i( stream->headers, stream->headers_n, "cookie", cookie_i++ ))
@@ -2398,7 +2398,7 @@ Http2_srv:                      ;
                                                     goaway_error = E_srv_Z_error_S_internal_error;
                                                     goto End2_2;
                                                 }
-                                                E_text_Z_s_P_s_copy_0( E_text_Z_s_P_copy_s0( headers[0], ":status: " ), s + 8, buf + 8 + 3 );
+                                                E_text_Z_s_P_copy_s_0( E_text_Z_s_P_copy_s0( headers[0], ":status: " ), s + 8, buf + 8 + 3 );
                                             }else
                                             {   headers[ headers_n ] = M( s_ - s + 1 );
                                                 if( !headers[ headers_n ] )
@@ -2411,7 +2411,7 @@ Http2_srv:                      ;
                                                     goaway_error = E_srv_Z_error_S_internal_error;
                                                     goto End2_2;
                                                 }
-                                                E_text_Z_s_P_s_copy_0( headers[ headers_n ], s, s_ );
+                                                E_text_Z_s_P_copy_s_0( headers[ headers_n ], s, s_ );
                                                 Pc s_ = E_text_Z_s0_R_s0_search( headers[ headers_n ], ": " );
                                                 E_text_Z_s_I_lower( headers[ headers_n ], s_ );
                                                 headers_n++;
@@ -2862,7 +2862,7 @@ End4:                                                   ;
                                                                 goto End2_2;
                                                             }
                                                             E_text_Z_n_N_s( s + l, stat.st_size, sizeof( stat.st_size ), 10 );
-                                                            E_text_Z_s_P_s_copy_0( E_text_Z_s_P_copy_s0( headers[ headers_i ], "content-length: " ), s, s + l );
+                                                            E_text_Z_s_P_copy_s_0( E_text_Z_s_P_copy_s0( headers[ headers_i ], "content-length: " ), s, s + l );
                                                             W(s);
                                                             N cookie_i = 0;
                                                             while( h = E_net_cli_Q_headers_R_i( stream->headers, stream->headers_n, "cookie", cookie_i++ ))
@@ -3159,7 +3159,7 @@ End4:                                                   ;
                                         goto End2_2;
                                     }
                                     E_text_Z_n_N_s( s + l, stat.st_size, sizeof( stat.st_size ), 10 );
-                                    E_text_Z_s_P_s_copy_0( E_text_Z_s_P_copy_s0( headers[ headers_i ], "content-length: " ), s, s + l );
+                                    E_text_Z_s_P_copy_s_0( E_text_Z_s_P_copy_s0( headers[ headers_i ], "content-length: " ), s, s + l );
                                     W(s);
                                     Pc h;
                                     N cookie_i = 0;

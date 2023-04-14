@@ -162,7 +162,7 @@ E_http2_push_I_entities_func_Z_html( struct E_text_syntax_Z_body *syntax
             )
             {   E_http2_push_S_links[ E_http2_push_S_links_n ] = M( s_end - s + 1 );
                 if( E_http2_push_S_links[ E_http2_push_S_links_n ] )
-                {   E_text_Z_s_P_s_copy_0( E_http2_push_S_links[ E_http2_push_S_links_n ], s, s_end );
+                {   E_text_Z_s_P_copy_s_0( E_http2_push_S_links[ E_http2_push_S_links_n ], s, s_end );
                     E_http2_push_S_links_n++;
                 }else
                     E_mem_Q_blk_I_remove( &E_http2_push_S_links, E_http2_push_S_links_n, 1 );

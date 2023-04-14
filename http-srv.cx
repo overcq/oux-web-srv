@@ -110,7 +110,7 @@ E_http_srv_I_php_cgi_M( B post
     if( !s )
     {   G_(); V();
     }
-    E_text_Z_s_P_s_copy_0( E_text_Z_s_P_copy_s0( s, "REQUEST_METHOD=" ), inheader->request.start, inheader->request.end );
+    E_text_Z_s_P_copy_s_0( E_text_Z_s_P_copy_s0( s, "REQUEST_METHOD=" ), inheader->request.start, inheader->request.end );
     environ[ environ_i++ ] = s;
     l = E_text_Z_s0_R_l( "QUERY_STRING=" ) + ( inheader->query.start ? inheader->query.end - inheader->query.start : 0 ) + 1;
     s = M(l);
@@ -119,7 +119,7 @@ E_http_srv_I_php_cgi_M( B post
     }
     s_1 = E_text_Z_s_P_copy_s0( s, "QUERY_STRING=" );
     if( inheader->query.start )
-        E_text_Z_s_P_s_copy_0( s_1, inheader->query.start, inheader->query.end );
+        E_text_Z_s_P_copy_s_0( s_1, inheader->query.start, inheader->query.end );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -130,7 +130,7 @@ E_http_srv_I_php_cgi_M( B post
     }
     s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_ACCEPT=" );
     if( inheader->accept.start )
-        E_text_Z_s_P_s_copy_0( s_1, inheader->accept.start, inheader->accept.end );
+        E_text_Z_s_P_copy_s_0( s_1, inheader->accept.start, inheader->accept.end );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -141,7 +141,7 @@ E_http_srv_I_php_cgi_M( B post
     }
     s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_ACCEPT_CHARSET=" );
     if( inheader->accept_charset.start )
-        E_text_Z_s_P_s_copy_0( s_1, inheader->accept_charset.start, inheader->accept_charset.end );
+        E_text_Z_s_P_copy_s_0( s_1, inheader->accept_charset.start, inheader->accept_charset.end );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -152,7 +152,7 @@ E_http_srv_I_php_cgi_M( B post
     }
     s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_ACCEPT_ENCODING=" );
     if( inheader->accept_encoding.start )
-        E_text_Z_s_P_s_copy_0( s_1, inheader->accept_encoding.start, inheader->accept_encoding.end );
+        E_text_Z_s_P_copy_s_0( s_1, inheader->accept_encoding.start, inheader->accept_encoding.end );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -163,7 +163,7 @@ E_http_srv_I_php_cgi_M( B post
     }
     s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_ACCEPT_LANGUAGE=" );
     if( inheader->accept_language.start )
-        E_text_Z_s_P_s_copy_0( s_1, inheader->accept_language.start, inheader->accept_language.end );
+        E_text_Z_s_P_copy_s_0( s_1, inheader->accept_language.start, inheader->accept_language.end );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -174,7 +174,7 @@ E_http_srv_I_php_cgi_M( B post
     }
     s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_CONNECTION=" );
     if( inheader->connection.start )
-        E_text_Z_s_P_s_copy_0( s_1, inheader->connection.start, inheader->connection.end );
+        E_text_Z_s_P_copy_s_0( s_1, inheader->connection.start, inheader->connection.end );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -185,7 +185,7 @@ E_http_srv_I_php_cgi_M( B post
     }
     s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_COOKIE=" );
     if( inheader->cookie.start )
-        E_text_Z_s_P_s_copy_0( s_1, inheader->cookie.start, inheader->cookie.end );
+        E_text_Z_s_P_copy_s_0( s_1, inheader->cookie.start, inheader->cookie.end );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -196,7 +196,7 @@ E_http_srv_I_php_cgi_M( B post
     }
     s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_HOST=" );
     if( inheader->host.start )
-        E_text_Z_s_P_s_copy_0( s_1, inheader->host.start, inheader->host.end );
+        E_text_Z_s_P_copy_s_0( s_1, inheader->host.start, inheader->host.end );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -207,7 +207,7 @@ E_http_srv_I_php_cgi_M( B post
     }
     s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_REFERER=" );
     if( inheader->referrer.start )
-        E_text_Z_s_P_s_copy_0( s_1, inheader->referrer.start, inheader->referrer.end );
+        E_text_Z_s_P_copy_s_0( s_1, inheader->referrer.start, inheader->referrer.end );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -218,7 +218,7 @@ E_http_srv_I_php_cgi_M( B post
     }
     s_1 = E_text_Z_s_P_copy_s0( s, "HTTP_USER_AGENT=" );
     if( inheader->user_agent.start )
-        E_text_Z_s_P_s_copy_0( s_1, inheader->user_agent.start, inheader->user_agent.end );
+        E_text_Z_s_P_copy_s_0( s_1, inheader->user_agent.start, inheader->user_agent.end );
     else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -285,7 +285,7 @@ E_http_srv_I_php_cgi_M( B post
     s_1 = E_text_Z_s_P_copy_s( E_text_Z_s_P_copy_s0( s, "REQUEST_URI=" ), path + path_uri_i, path + path_uri_end_i );
     if( inheader->query.start )
     {   *s_1++ = '?';
-        E_text_Z_s_P_s_copy_0( s_1, inheader->query.start, inheader->query.end );
+        E_text_Z_s_P_copy_s_0( s_1, inheader->query.start, inheader->query.end );
     }else
         *s_1 = '\0';
     environ[ environ_i++ ] = s;
@@ -310,7 +310,7 @@ E_http_srv_I_php_cgi_M( B post
         if( !s )
         {   G_(); V();
         }
-        E_text_Z_s_P_s_copy_0( E_text_Z_s_P_copy_s0( s, "CONTENT_TYPE=" ), inheader->content_type.start, inheader->content_type.end );
+        E_text_Z_s_P_copy_s_0( E_text_Z_s_P_copy_s0( s, "CONTENT_TYPE=" ), inheader->content_type.start, inheader->content_type.end );
         environ[ environ_i++ ] = s;
         N l_1 = E_text_Z_n_N_s_G( post_l, sizeof( post_l ), 10 );
         l = E_text_Z_s0_R_l( "CONTENT_LENGTH=" ) + l_1 + 1;
