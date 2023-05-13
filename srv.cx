@@ -242,8 +242,7 @@ E_srv_M( void
 }
 void
 E_srv_W( void
-){
-    if( E_srv_S_poll_pipe[0] != -1 )
+){  if( E_srv_S_poll_pipe[0] != -1 )
     {   V0( close( E_srv_S_poll_pipe[0] )){}
         V0( close( E_srv_S_poll_pipe[1] )){}
     }
@@ -742,7 +741,6 @@ End:            ;
                     )
                         break;
                 if( port_found )
-
                     inheader.host.end = old_end;
                 if( k == E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost_n )
                 {   E_reply_I_code( E_http_srv_S_accept[i].ssl, E_http_srv_S_accept[i].listen_sock, 400, yes, http_11 );
@@ -826,9 +824,10 @@ End:            ;
                     *path_end = '\0';
                     path_uri_end_i = path_end - path;
                     struct stat stat_;
-                    V0( stat( path, &stat_ ))
+                    int e;
+                    V1e( stat( path, &stat_ ), e )
                     {   W(path);
-                        E_reply_I_code( E_http_srv_S_accept[i].ssl, E_http_srv_S_accept[i].listen_sock, 500, yes, http_11 );
+                        E_reply_I_code( E_http_srv_S_accept[i].ssl, E_http_srv_S_accept[i].listen_sock, e == ENOENT ? 404 : 500, yes, http_11 );
                         goto End_1;
                     }
                     if(( stat_.st_mode & S_IFMT ) == S_IFDIR )
@@ -2216,9 +2215,10 @@ Http2_srv:                      ;
                                     *path_end = '\0';
                                     path_uri_end_i = path_end - path;
                                     struct stat stat_;
-                                    V0( stat( path, &stat_ ))
+                                    int e;
+                                    V1e( stat( path, &stat_ ), e )
                                     {   W(path);
-                                        if( !~E_http2_srv_I_reply_code( i, stream->stream_id, 500 ))
+                                        if( !~E_http2_srv_I_reply_code( i, stream->stream_id, e == ENOENT ? 404 : 500 ))
                                         {   goaway_error = E_srv_Z_error_S_internal_error;
                                             goto End2_2;
                                         }

@@ -164,23 +164,19 @@ entities_func( struct E_text_syntax_Z_body *syntax
 N
 E_conf_I_read( I conf_file
 ){
-G_();
     I syntax_file = E_mem_Q_file_M( "conf.syntax", yes, 0 );
     if( !~syntax_file )
         return ~0;
-G_();
     struct E_text_syntax_Z_body *syntax;
     if( E_text_syntax_M( syntax_file, &syntax ))
     {   E_mem_Q_file_W( syntax_file );
         return ~0;
     }
-G_();
     E_mem_Q_file_W( syntax_file );
     struct E_text_syntax_Z_state *state;
     N state_n;
     if( !~E_text_syntax_Q_state_M( syntax, &state, &state_n ))
         return ~0;
-G_();
     entities_bind = E_text_syntax_R_entity_by_name( syntax, "bind name" );
     entities_ip = E_text_syntax_R_entity_by_name( syntax, "ip" );
     entities_port = E_text_syntax_R_entity_by_name( syntax, "port" );
@@ -204,19 +200,16 @@ G_();
     {   E_text_syntax_Q_state_W( state, state_n );
         return ~0;
     }
-G_();
     N ret = E_text_syntax_Q_state_I_parse( conf_file, syntax, &state, &state_n, entities_func );
     if( !~ret )
     {   E_text_syntax_Q_state_W( state, state_n );
         E_text_syntax_W(syntax);
         return ~0;
     }
-G_();
     E_text_syntax_Q_state_W( state, state_n );
     E_text_syntax_W(syntax);
     if( !E_conf_S_bind_n )
         return ~0;
-G_();
     for_n( i, E_conf_S_bind_n )
     {   if( !E_conf_S_bind[i].ip
         || !E_conf_S_bind[i].port
