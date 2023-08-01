@@ -346,7 +346,9 @@ D( srv, srv )
 {   Dh_();
     Xh_A( E_srv_D_srv_I_unblock );
     I_D
-    {   N ready_n;
+    {   if( !( E_http_srv_S_accept_n || E_http2_srv_S_accept_n ))
+            E_mem_Q_sys_table_I_reduce();
+        N ready_n;
         Xh_B_();
             #ifdef __gnu_linux__
         VO1_( ready_n = epoll_wait( E_srv_S_epoll_fd, E_srv_S_ee_ready, E_srv_S_ee_ready_n, E_http_srv_S_accept_n || E_http2_srv_S_accept_n ? S_system_idle_time : -1 ));
