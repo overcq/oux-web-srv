@@ -846,7 +846,9 @@ End:            ;
                         dir = yes;
                     }
                 }else
+                {   //TODO Redirect to slash at end.
                     dir = yes;
+                }
                 if(dir)
                 {   N path_end_i = path_end - path;
                     if( !E_mem_Q_blk_I_append( &path, E_text_Z_s0_R_l( S_php_index_file )))
@@ -1865,13 +1867,15 @@ End2:       if( E_http2_srv_S_accept[i].preface )
                         {   goaway_error = E_srv_Z_error_S_protocol_error;
                             goto End2_2;
                         }
-                        struct E_http2_srv_Z_stream *stream;
+                        struct E_http2_srv_Z_stream *stream = 0;
                         for_each( stream_id, E_http2_srv_S_accept[i].stream, E_mem_Q_tab )
                         {   stream = E_mem_Q_tab_R( E_http2_srv_S_accept[i].stream, stream_id );
                             if( stream->stream_id == frame_stream )
                                 break;
                         }
-                        if( stream->stream_id != frame_stream )
+                        if( !stream
+                        || stream->stream_id != frame_stream
+                        )
                         {   goaway_error = E_srv_Z_error_S_protocol_error;
                             goto End2_2;
                         }
@@ -2243,7 +2247,9 @@ Http2_srv:                      ;
                                         dir = yes;
                                     }
                                 }else
+                                {   //TODO Redirect to slash at end.
                                     dir = yes;
+                                }
                                 if(dir)
                                 {   N path_end_i = path_end - path;
                                     if( !E_mem_Q_blk_I_append( &path, E_text_Z_s0_R_l( S_php_index_file )))
@@ -3209,8 +3215,7 @@ End4:                                                   ;
                         break;
                     }
                   case E_http2_srv_Z_frame_type_S_priority:
-                    {   G_();
-                        if( frame_length != 5 )
+                    {   if( frame_length != 5 )
                         {   goaway_error = E_srv_Z_error_S_frame_size_error;
                             goto End2_2;
                         }
@@ -3218,13 +3223,15 @@ End4:                                                   ;
                         {   goaway_error = E_srv_Z_error_S_protocol_error;
                             goto End2_2;
                         }
-                        struct E_http2_srv_Z_stream *stream;
+                        struct E_http2_srv_Z_stream *stream = 0;
                         for_each( stream_id, E_http2_srv_S_accept[i].stream, E_mem_Q_tab )
                         {   stream = E_mem_Q_tab_R( E_http2_srv_S_accept[i].stream, stream_id );
                             if( stream->stream_id == frame_stream )
                                 break;
                         }
-                        if( stream->stream_id != frame_stream )
+                        if( !stream
+                        || stream->stream_id != frame_stream
+                        )
                         {   goaway_error = E_srv_Z_error_S_protocol_error;
                             goto End2_2;
                         }
@@ -3245,13 +3252,15 @@ End4:                                                   ;
                         {   goaway_error = E_srv_Z_error_S_protocol_error;
                             goto End2_2;
                         }
-                        struct E_http2_srv_Z_stream *stream;
+                        struct E_http2_srv_Z_stream *stream = 0;
                         for_each( stream_id, E_http2_srv_S_accept[i].stream, E_mem_Q_tab )
                         {   stream = E_mem_Q_tab_R( E_http2_srv_S_accept[i].stream, stream_id );
                             if( stream->stream_id == frame_stream )
                                 break;
                         }
-                        if( stream->stream_id != frame_stream )
+                        if( !stream
+                        || stream->stream_id != frame_stream
+                        )
                         {   goaway_error = E_srv_Z_error_S_protocol_error;
                             goto End2_2;
                         }
