@@ -2397,7 +2397,12 @@ Http2_srv:                      ;
                                             && E_text_Z_s_T_starts_case_s0( s, s_end, "Status: " )
                                             )
                                             {   status_found = yes;
-                                                N code_l = E_text_Z_s0_R_l( s + 8 );
+                                                Pc code_end = E_text_Z_s_R_search_c_( s + 8, '\r' );
+                                                Pc code_end_2 = E_text_Z_s_R_search_c( s + 8, code_end, ' ' );
+                                                if( *code_end_2 )
+                                                    code_end = code_end_2;
+                                                N code_l = code_end - ( s + 8 );
+                                                G_(); Gs( s + 8, code_end ); Gd( code_l );
                                                 headers[0] = M( 9 + code_l + 1 );
                                                 if( !headers[0] )
                                                 {   for( N headers_i = 1; headers_i != headers_n; headers_i++ )
@@ -2407,7 +2412,7 @@ Http2_srv:                      ;
                                                     goaway_error = E_srv_Z_error_S_internal_error;
                                                     goto End2_2;
                                                 }
-                                                E_text_Z_s_P_copy_s_0( E_text_Z_s_P_copy_s0( headers[0], ":status: " ), s + 8, buf + 8 + code_l );
+                                                E_text_Z_s_P_copy_s_0( E_text_Z_s_P_copy_s0( headers[0], ":status: " ), s + 8, s + 8 + code_l );
                                             }else
                                             {   headers[ headers_n ] = M( s_ - s + 1 );
                                                 if( !headers[ headers_n ] )
