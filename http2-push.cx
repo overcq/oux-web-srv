@@ -101,7 +101,7 @@ Cont:   ;
 I
 E_http2_push_Q_tmp_file_M( Pc *s
 ){  int fd;
-    Pc s_ = M( 34 + 1 );
+    Pc s_ = M( J_s0_R_l( "/tmp/oux-web-srv-http2-push-XXXXXX" ) + 1 );
     if( !s_ )
         return ~0;
     E_text_Z_s_P_copy_s0_0( s_, "/tmp/oux-web-srv-http2-push-XXXXXX" );
