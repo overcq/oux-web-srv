@@ -343,7 +343,7 @@ E_srv_R_new_push_stream( N i
     return stream_id;
 }
 D( srv, srv )
-{   Dh_();
+{   Da_();
     Xh_A( E_srv_D_srv_I_unblock );
     I_D
     {   if( !( E_http_srv_S_accept_n || E_http2_srv_S_accept_n ))
