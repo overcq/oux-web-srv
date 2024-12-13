@@ -756,7 +756,7 @@ End:            ;
                 *path_end = '/';
                 N path_uri_i = path_end - path;
                 path_end++;
-                // Normalizacja ścieżki żądania: eliminacja powtórzonych separatorów, sprawdzenie, czy nie wychodzi poza root_path.
+                // Normalizacja ścieżki żądania: eliminacja powtórzonych separatorów, sprawdzenie, czy nie wychodzi poza “root_path”.
                 N path_uri_end_i = path_uri_i + 1;
                 s = path;
                 N path_n = 0;
@@ -1067,7 +1067,9 @@ End:            ;
                         E_reply_I_code( E_http_srv_S_accept[i].ssl, E_http_srv_S_accept[i].listen_sock, 500, no, http_11 );
                         goto End_4;
                     }
-                if( inheader.cookie.start )
+                if( inheader.cookie.start
+                && !php
+                )
                 {   if( !E_srv_Q_reply_I_add_header_1_s0( &headers, &headers_l, "Cookie: " ))
                     {   W(headers);
                         E_reply_I_code( E_http_srv_S_accept[i].ssl, E_http_srv_S_accept[i].listen_sock, 500, no, http_11 );
@@ -2048,7 +2050,10 @@ Http2_srv:                      ;
                                     }
                                     E_text_Z_s_P_copy_s0_0( E_http2_srv_S_accept[i].authority, authority );
                                 }else if( !E_text_Z_s0_T_eq_s0( authority, E_http2_srv_S_accept[i].authority ))
-                                {   if( !E_mem_Q_blk_M_replace( &E_http2_srv_S_accept[i].authority, E_text_Z_s0_R_l_0(authority) ))
+                                {   N l = E_text_Z_s0_R_l_0(authority);
+                                    if( E_text_Z_s0_R_l_0( E_http2_srv_S_accept[i].authority ) != l
+                                    && !E_mem_Q_blk_M_replace( &E_http2_srv_S_accept[i].authority, l )
+                                    )
                                     {   if( !~E_http2_srv_I_reply_code( i, stream->stream_id, 400 ))
                                         {   goaway_error = E_srv_Z_error_S_internal_error;
                                             goto End2_2;
@@ -2134,7 +2139,7 @@ Http2_srv:                      ;
                                 N path_uri_i = path_end - path;
                                 N path_uri_end_i = path_uri_i + 1;
                                 path_end++;
-                                // Normalizacja ścieżki żądania: eliminacja powtórzonych separatorów, sprawdzenie, czy nie wychodzi poza root_path.
+                                // Normalizacja ścieżki żądania: eliminacja powtórzonych separatorów, sprawdzenie, czy nie wychodzi poza “root_path”.
                                 s = path;
                                 N path_n_0 = E_conf_S_bind[ E_srv_S_srv[j].bind_i ].virtualhost[k].root_path_n;
                                 N path_n = path_n_0;
@@ -2463,29 +2468,6 @@ Http2_srv:                      ;
                                     }
                                     E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( headers[ headers_n ], "server: " ), S_server_name );
                                     headers_n++;
-                                    Pc h;
-                                    N cookie_i = 0;
-                                    while( h = E_net_cli_Q_headers_R_i( stream->headers, stream->headers_n, "cookie", cookie_i++ ))
-                                    {   if( !( E_mem_Q_blk_I_append( &headers, 1 )))
-                                        {   for_n( headers_i, headers_n )
-                                                W( headers[ headers_i ] );
-                                            W(headers);
-                                            W(buf);
-                                            goaway_error = E_srv_Z_error_S_internal_error;
-                                            goto End2_2;
-                                        }
-                                        headers[ headers_n ] = M( J_s0_R_l( "cookie: " ) + E_text_Z_s0_R_l(h) + 1 );
-                                        if( !headers[ headers_n ] )
-                                        {   for_n( headers_i, headers_n )
-                                                W( headers[ headers_i ] );
-                                            W(headers);
-                                            W(buf);
-                                            goaway_error = E_srv_Z_error_S_internal_error;
-                                            goto End2_2;
-                                        }
-                                        E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( headers[ headers_n ], "cookie: " ), h );
-                                        headers_n++;
-                                    }
                                     for_n( headers_i, headers_n )
                                     {   G_(); Gs0( headers[ headers_i ] );
                                     }
