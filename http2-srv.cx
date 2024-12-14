@@ -510,14 +510,15 @@ E_http2_srv_I_reply_code( N accept_i
     E_text_Z_n_N_s( s + 3, code, sizeof(code), 10 );
     *( s + 3 ) = '\0';
     Pc buffer_ = E_http2_srv_S_accept[ accept_i ].buf_2_ + 9;
-    if( !~E_net_http2_Q_buffer_I_write_headers( &buffer_, headers, 1, &E_http2_srv_S_accept[ accept_i ].dynamic_table_enc, &E_http2_srv_S_accept[ accept_i ].dynamic_table_enc_n, E_http2_srv_S_accept[ accept_i ].send_dynamic_table_size_max, &E_http2_srv_S_accept[ accept_i ].send_dynamic_table_size_max_hit ))
+    Pc buffer_end = E_http2_srv_S_accept[ accept_i ].buf_2 + 9 + E_http2_srv_S_accept[ accept_i ].send_frame_size_max;
+    if( !~E_net_http2_Q_buffer_I_write_headers( &buffer_, buffer_end, headers, 1, &E_http2_srv_S_accept[ accept_i ].dynamic_table_enc, &E_http2_srv_S_accept[ accept_i ].dynamic_table_enc_n, E_http2_srv_S_accept[ accept_i ].send_dynamic_table_size_max, &E_http2_srv_S_accept[ accept_i ].send_dynamic_table_size_max_hit ))
     {   W( headers[0] );
         W(headers);
         return ~0;
     }
     W( headers[0] );
     W(headers);
-    E_net_http2_Q_buffer_I_write_frame_header( &E_http2_srv_S_accept[ accept_i ].buf_2_, buffer_ - 9 - E_http2_srv_S_accept[ accept_i ].buf_2_, E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream | E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers, frame_stream );
+    E_net_http2_Q_buffer_I_write_frame_header( &E_http2_srv_S_accept[ accept_i ].buf_2_, buffer_end, buffer_ - 9 - E_http2_srv_S_accept[ accept_i ].buf_2_, E_http2_srv_Z_frame_type_S_headers, E_http2_srv_Z_frame_type_headers_Z_flag_S_end_stream | E_http2_srv_Z_frame_type_headers_Z_flag_S_end_headers, frame_stream );
     E_http2_srv_S_accept[ accept_i ].buf_2_ = buffer_;
     return 0;
 }
