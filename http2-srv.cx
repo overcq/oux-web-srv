@@ -76,7 +76,6 @@ struct E_http2_srv_Z_accept
   Z_clock_time keepalive_tv;
   B preface;
   N send_dynamic_table_size_max;
-  B send_dynamic_table_size_max_hit;
   B push;
   N concurrent_streams_max;
   S recv_window_size;
@@ -110,14 +109,13 @@ E_http2_srv_Q_accept_M( SSL *ssl
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].peer_addr = *peer_addr;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf_l = 0;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].preface = yes;
-    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_dynamic_table_size_max = 4096; //CONF
-    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_dynamic_table_size_max_hit = no;
-    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].push = no; //NDFN Domyślnie wyłączone, ponieważ przeglądarki nie akceptują.
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_dynamic_table_size_max = 4096;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].push = no;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].concurrent_streams_max = (N32)~0 >> 1;
-    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].recv_window_size = 1024 * 1024; //CONF
-    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_window_size = 65535; //CONF
-    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].recv_frame_size_max = 64 * 1024; //CONF
-    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_frame_size_max = 16384; //CONF
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].recv_window_size = 65535;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_window_size = 65535;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].recv_frame_size_max = 16384;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_frame_size_max = 16384;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].header_list_size_max = ~0;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].new_stream = 1;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].new_push_stream = 2;
@@ -511,7 +509,7 @@ E_http2_srv_I_reply_code( N accept_i
     *( s + 3 ) = '\0';
     Pc buffer_ = E_http2_srv_S_accept[ accept_i ].buf_2_ + 9;
     Pc buffer_end = E_http2_srv_S_accept[ accept_i ].buf_2 + 9 + E_http2_srv_S_accept[ accept_i ].send_frame_size_max;
-    if( !~E_net_http2_Q_buffer_I_write_headers( &buffer_, buffer_end, headers, 1, &E_http2_srv_S_accept[ accept_i ].dynamic_table_enc, &E_http2_srv_S_accept[ accept_i ].dynamic_table_enc_n, E_http2_srv_S_accept[ accept_i ].send_dynamic_table_size_max, &E_http2_srv_S_accept[ accept_i ].send_dynamic_table_size_max_hit ))
+    if( !~E_net_http2_Q_buffer_I_write_headers( &buffer_, buffer_end, headers, 1, &E_http2_srv_S_accept[ accept_i ].dynamic_table_enc, &E_http2_srv_S_accept[ accept_i ].dynamic_table_enc_n, E_http2_srv_S_accept[ accept_i ].send_dynamic_table_size_max ))
     {   W( headers[0] );
         W(headers);
         return ~0;
