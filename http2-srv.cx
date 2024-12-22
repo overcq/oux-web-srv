@@ -75,6 +75,7 @@ struct E_http2_srv_Z_accept
   N buf_l;
   Z_clock_time keepalive_tv;
   B preface;
+  N recv_dynamic_table_size_max;
   N send_dynamic_table_size_max;
   B push;
   N concurrent_streams_max;
@@ -87,7 +88,6 @@ struct E_http2_srv_Z_accept
   N dynamic_table_dec_n;
   Pc *dynamic_table_enc;
   N dynamic_table_enc_n;
-  Pc authority;
   struct E_mem_Q_tab_Z *stream;
   N32 new_stream;
   N32 new_push_stream;
@@ -109,6 +109,7 @@ E_http2_srv_Q_accept_M( SSL *ssl
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].peer_addr = *peer_addr;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].buf_l = 0;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].preface = yes;
+    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].recv_dynamic_table_size_max = 4096;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].send_dynamic_table_size_max = 4096;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].push = no;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].concurrent_streams_max = (N32)~0 >> 1;
@@ -149,7 +150,6 @@ E_http2_srv_Q_accept_M( SSL *ssl
         return ~0;
     }
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].dynamic_table_enc_n = 0;
-    E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].authority = 0;
     E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].stream = E_mem_Q_tab_M( sizeof( struct E_http2_srv_Z_stream ), 0 );
     if( !E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].stream )
     {   W( E_http2_srv_S_accept[ E_http2_srv_S_accept_n - 1 ].dynamic_table_enc );
@@ -173,8 +173,6 @@ void
 E_http2_srv_Q_accept_W_2( N i
 ){  W( E_http2_srv_S_accept[i].dynamic_table_dec );
     W( E_http2_srv_S_accept[i].dynamic_table_enc );
-    if( E_http2_srv_S_accept[i].authority )
-        W( E_http2_srv_S_accept[i].authority );
     for_each( stream_id, E_http2_srv_S_accept[i].stream, E_mem_Q_tab )
     {   struct E_http2_srv_Z_stream *stream = E_mem_Q_tab_R( E_http2_srv_S_accept[i].stream, stream_id );
         if( stream->headers )
@@ -343,8 +341,6 @@ E_http2_srv_I_php_cgi_M( B post
     *s_1 = '\0';
     environ[ environ_i++ ] = s;
     h = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, ":authority" );
-    if( !h )
-        h = E_http2_srv_S_accept[ accept_i ].authority;
     l = J_s0_R_l( "HTTP_HOST=" ) + E_text_Z_s0_R_l(h) + 1;
     s = M(l);
     if( !s )

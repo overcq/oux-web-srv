@@ -1382,7 +1382,9 @@ End_1:      if( E_http_srv_S_accept[i].ssl )
                                     break;
                             Pc authority = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, ":authority" );
                             if( !authority )
-                                authority = E_http2_srv_S_accept[i].authority;
+                            {   goaway_error = E_srv_Z_error_S_protocol_error;
+                                goto End2_2;
+                            }
                             Pc s = E_text_Z_s0_R_search_c( authority, ':' );
                             if( ~E_http2_push_I_parse_links( stream->headers[ headers_path_i ] + 7, authority, !*s ? "443" : 0 )
                             && E_http2_push_S_links_n
@@ -2003,7 +2005,7 @@ End2:;
                             E_http2_srv_S_accept[i].buf_ += headers_length + pad_length;
                             stream->end_stream = no;
                         }else
-                        {   if( !~E_net_http2_Q_buffer_I_read_headers( &E_http2_srv_S_accept[i].buf_, headers_length, &stream->headers, &stream->headers_n, &E_http2_srv_S_accept[i].dynamic_table_dec, &E_http2_srv_S_accept[i].dynamic_table_dec_n ))
+                        {   if( !~E_net_http2_Q_buffer_I_read_headers( &E_http2_srv_S_accept[i].buf_, headers_length, &stream->headers, &stream->headers_n, &E_http2_srv_S_accept[i].dynamic_table_dec, &E_http2_srv_S_accept[i].dynamic_table_dec_n, E_http2_srv_S_accept[i].recv_dynamic_table_size_max ))
                             {   goaway_error = E_srv_Z_error_S_internal_error;
                                 goto End2_2;
                             }
@@ -2026,53 +2028,8 @@ Http2_srv:                      ;
                                 }
                                 Pc authority = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, ":authority" );
                                 if( !authority )
-                                {   if( !E_http2_srv_S_accept[i].authority )
-                                    {   if( !~E_http2_srv_I_reply_code( i, stream->stream_id, 400 ))
-                                        {   goaway_error = E_srv_Z_error_S_internal_error;
-                                            goto End2_2;
-                                        }
-                                        goto End2_3;
-                                    }
-                                    if( !E_mem_Q_blk_I_append( &stream->headers, 1 ))
-                                    {   if( !~E_http2_srv_I_reply_code( i, stream->stream_id, 400 ))
-                                        {   goaway_error = E_srv_Z_error_S_internal_error;
-                                            goto End2_2;
-                                        }
-                                        goto End2_3;
-                                    }
-                                    stream->headers_n++;
-                                    stream->headers[ stream->headers_n - 1 ] = M( J_s0_R_l( ":authority: " ) + E_text_Z_s0_R_l( E_http2_srv_S_accept[i].authority ) + 1 );
-                                    if( !stream->headers[ stream->headers_n - 1 ] )
-                                    {   if( !~E_http2_srv_I_reply_code( i, stream->stream_id, 400 ))
-                                        {   goaway_error = E_srv_Z_error_S_internal_error;
-                                            goto End2_2;
-                                        }
-                                        goto End2_3;
-                                    }
-                                    E_text_Z_s_P_copy_s0_0( E_text_Z_s_P_copy_s0( stream->headers[ stream->headers_n - 1 ], ":authority: " ), E_http2_srv_S_accept[i].authority );
-                                    authority = stream->headers[ stream->headers_n - 1 ] + 12;
-                                }else if( !E_http2_srv_S_accept[i].authority )
-                                {   E_http2_srv_S_accept[i].authority = M( E_text_Z_s0_R_l_0(authority) );
-                                    if( !E_http2_srv_S_accept[i].authority )
-                                    {   if( !~E_http2_srv_I_reply_code( i, stream->stream_id, 400 ))
-                                        {   goaway_error = E_srv_Z_error_S_internal_error;
-                                            goto End2_2;
-                                        }
-                                        goto End2_3;
-                                    }
-                                    E_text_Z_s_P_copy_s0_0( E_http2_srv_S_accept[i].authority, authority );
-                                }else if( !E_text_Z_s0_T_eq_s0( authority, E_http2_srv_S_accept[i].authority ))
-                                {   N l = E_text_Z_s0_R_l_0(authority);
-                                    if( E_text_Z_s0_R_l_0( E_http2_srv_S_accept[i].authority ) != l
-                                    && !E_mem_Q_blk_M_replace( &E_http2_srv_S_accept[i].authority, l )
-                                    )
-                                    {   if( !~E_http2_srv_I_reply_code( i, stream->stream_id, 400 ))
-                                        {   goaway_error = E_srv_Z_error_S_internal_error;
-                                            goto End2_2;
-                                        }
-                                        goto End2_3;
-                                    }
-                                    E_text_Z_s_P_copy_s0_0( E_http2_srv_S_accept[i].authority, authority );
+                                {   goaway_error = E_srv_Z_error_S_protocol_error;
+                                    goto End2_2;
                                 }
                                 Pc s = E_text_Z_s0_R_search_c( authority, ':' );
                                 N16 port = 443;
@@ -2600,7 +2557,9 @@ Http2_srv:                      ;
                                                             break;
                                                     Pc authority = E_net_cli_Q_headers_R( stream->headers, stream->headers_n, ":authority" );
                                                     if( !authority )
-                                                        authority = E_http2_srv_S_accept[i].authority;
+                                                    {   goaway_error = E_srv_Z_error_S_protocol_error;
+                                                        goto End2_2;
+                                                    }
                                                     Pc s = E_text_Z_s0_R_search_c( authority, ':' );
                                                     if( ~E_http2_push_I_parse_links( stream->headers[ headers_path_i ] + 7, authority, !*s ? "443" : 0 )
                                                     && E_http2_push_S_links_n
@@ -3461,7 +3420,7 @@ End4:                                                   ;
                         E_http2_srv_S_accept[i].buf_ += frame_length;
                         if( frame_flags & E_http2_srv_Z_frame_type_continuation_Z_flag_S_end_headers )
                         {   p = stream->buf_headers;
-                            if( !~E_net_http2_Q_buffer_I_read_headers( &stream->buf_headers, stream->buf_headers_l, &stream->headers, &stream->headers_n, &E_http2_srv_S_accept[i].dynamic_table_dec, &E_http2_srv_S_accept[i].dynamic_table_dec_n ))
+                            if( !~E_net_http2_Q_buffer_I_read_headers( &stream->buf_headers, stream->buf_headers_l, &stream->headers, &stream->headers_n, &E_http2_srv_S_accept[i].dynamic_table_dec, &E_http2_srv_S_accept[i].dynamic_table_dec_n, E_http2_srv_S_accept[i].recv_dynamic_table_size_max ))
                             {   goaway_error = E_srv_Z_error_S_internal_error;
                                 goto End2_2;
                             }
