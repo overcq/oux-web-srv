@@ -19,9 +19,14 @@ E_main_I_read_conf( void
     {   I conf_file = E_mem_Q_file_M( E_main_S_conf_file[ file_i ], yes, 0 );
         if( !~conf_file )
             continue;
-        if( E_conf_I_read( conf_file ))
-            return ~0;
-        E_mem_Q_file_W( conf_file );
+        if( (S)conf_file < 0 )
+            return (N)conf_file;
+        N ret = E_conf_I_read( conf_file );
+        if(ret)
+            return ret;
+        ret = E_mem_Q_file_W( conf_file );
+        if(ret)
+            return ret;
         break;
     }
     return 0;
@@ -31,26 +36,35 @@ int
 main(
   int argc
 , Pc *argv
-){  E_base_M( argc, argv );
+){  N ret = E_base_M( argc, argv );
+    if(ret)
+        return (int)ret;
     X_M( main, loop );
+    if( _X_var( main, loop ) < 0 )
+        return (int)_X_var( main, loop );
     Mt_( E_conf_S_bind, 0 );
-    Mt_( E_srv_S_srv, 0 );
-    Mt_( E_http_srv_S_accept, 0 );
-    Mt_( E_http2_srv_S_accept, 0 );
-    if( !E_conf_S_bind
-    || !E_srv_S_srv
-    || !E_http_srv_S_accept
-    || !E_http2_srv_S_accept
-    )
-    {   G_(); Gs0_( "error: allocating memory" ); V();
+    if( !E_conf_S_bind )
+    {   GV_(NA); V();
     }
-    if( !~E_main_I_read_conf() )
+    Mt_( E_srv_S_srv, 0 );
+    if( !E_srv_S_srv )
+    {   GV_(NA); V();
+    }
+    Mt_( E_http_srv_S_accept, 0 );
+    if( !E_http_srv_S_accept )
+    {   GV_(NA); V();
+    }
+    Mt_( E_http2_srv_S_accept, 0 );
+    if( !E_http2_srv_S_accept )
+    {   GV_(NA); V();
+    }
+    if( E_main_I_read_conf() )
     {   G_(); Gs0_( "error: reading config file" ); V();
     }
-    if( !~E_http2_push_M() )
+    if( E_http2_push_M() )
     {   G_(); Gs0_( "error: initializing HTTP/2 push" ); V();
     }
-    if( !~E_srv_M() )
+    if( E_srv_M() )
     {   G_(); Gs0_( "error: initializing server" ); V();
     }
     struct passwd *pw = getpwnam( S_as_user );
@@ -59,30 +73,55 @@ main(
     }
     V0_( setgid( pw->pw_gid ));
     V0_( setuid( pw->pw_uid ));
-    Dh_M( srv, srv, 0, 0 );
+    ret = Dh_M( srv, srv, 0, 0 );
+    if(ret)
+        return (int)ret;
     O{  X_B( main, loop, 0 )
             break;
     }
-    Dh_W( srv, srv, 0 );
-    E_text_syntax_W( E_http2_push_Z_syntax_html );
-    W( E_http2_srv_S_accept );
-    W( E_http_srv_S_accept );
-    W( E_srv_S_srv );
+    ret = Dh_W( srv, srv, 0 );
+    if(ret)
+        return (int)ret;
+    ret = E_text_syntax_W( E_http2_push_Z_syntax_html );
+    if(ret)
+        return (int)ret;
+    ret = W( E_http2_srv_S_accept );
+    if(ret)
+        return (int)ret;
+    ret = W( E_http_srv_S_accept );
+    if(ret)
+        return (int)ret;
+    ret = W( E_srv_S_srv );
+    if(ret)
+        return (int)ret;
     for_n( i, E_conf_S_bind_n )
-    {   W( E_conf_S_bind[i].ip );
+    {   if( W( E_conf_S_bind[i].ip ))
+            return 0;
         if( E_conf_S_bind[i].ssl )
-        {   W( E_conf_S_bind[i].certificate_path );
-            W( E_conf_S_bind[i].private_key_path );
+        {   ret = W( E_conf_S_bind[i].certificate_path );
+            if(ret)
+                return (int)ret;
+            ret = W( E_conf_S_bind[i].private_key_path );
+            if(ret)
+                return (int)ret;
         }
         for_n( j, E_conf_S_bind[i].virtualhost_n )
-        {   W( E_conf_S_bind[i].virtualhost[j].root_path );
-            W( E_conf_S_bind[i].virtualhost[j].host );
+        {   ret = W( E_conf_S_bind[i].virtualhost[j].root_path );
+            if(ret)
+                return (int)ret;
+            ret = W( E_conf_S_bind[i].virtualhost[j].host );
+            if(ret)
+                return (int)ret;
         }
     }
-    W( E_conf_S_bind );
-    X_W( main, loop );
-    E_base_W();
-    return 0;
+    ret = W( E_conf_S_bind );
+    if(ret)
+        return (int)ret;
+    ret = X_W( main, loop );
+    if(ret)
+        return (int)ret;
+    ret = E_base_W();
+    return ret ? (int)ret : EXIT_SUCCESS;
 }
 //==============================================================================
 void

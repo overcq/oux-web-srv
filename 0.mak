@@ -1,6 +1,6 @@
 ################################################################################
 #   ___   workplace
-#  ¦OUX¦  ‟GNU” “make”
+#  ¦OUX¦  GNU “make”
 #  ¦/C+¦  server
 #   ---   web server
 #         program makefile
