@@ -52,11 +52,11 @@ E_reply_I_code_( SSL *ssl
                 E_text_Z_s_P_copy_s0( s_1, "\r\n" );
             G_(); Gsl( s, 9 + 4 + E_text_Z_s0_R_l( E_reply_S_status_msg[i].s ));
             if( E_net_cli_I_write_data( ssl, fd, s, l ) != l )
-            {   N ret = W(s);
-                return ret ? ret : ~0;
+            {   N r = W(s);
+                return r ? r : ~0;
             }
-            N ret = W(s);
-            return ret ? ret : 0;
+            N r = W(s);
+            return r ? r : 0;
         }
     E_reply_I_code_( ssl, fd, 500, end, close, http_11 );
     return ~0;

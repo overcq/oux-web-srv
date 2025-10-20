@@ -21,12 +21,12 @@ E_main_I_read_conf( void
             continue;
         if( (S)conf_file < 0 )
             return (N)conf_file;
-        N ret = E_conf_I_read( conf_file );
-        if(ret)
-            return ret;
-        ret = E_mem_Q_file_W( conf_file );
-        if(ret)
-            return ret;
+        N r = E_conf_I_read( conf_file );
+        if(r)
+            return r;
+        r = E_mem_Q_file_W( conf_file );
+        if(r)
+            return r;
         break;
     }
     return 0;
@@ -36,9 +36,9 @@ int
 main(
   int argc
 , Pc *argv
-){  N ret = E_base_M( argc, argv );
-    if(ret)
-        return (int)ret;
+){  N r = E_base_M( argc, argv );
+    if(r)
+        return (int)r;
     X_M( main, loop );
     if( _X_var( main, loop ) < 0 )
         return (int)_X_var( main, loop );
@@ -73,55 +73,55 @@ main(
     }
     V0_( setgid( pw->pw_gid ));
     V0_( setuid( pw->pw_uid ));
-    ret = Dh_M( srv, srv, 0, 0 );
-    if(ret)
-        return (int)ret;
+    r = Dh_M( srv, srv, 0, 0 );
+    if(r)
+        return (int)r;
     O{  X_B( main, loop, 0 )
             break;
     }
-    ret = Dh_W( srv, srv, 0 );
-    if(ret)
-        return (int)ret;
-    ret = E_text_syntax_W( E_http2_push_Z_syntax_html );
-    if(ret)
-        return (int)ret;
-    ret = W( E_http2_srv_S_accept );
-    if(ret)
-        return (int)ret;
-    ret = W( E_http_srv_S_accept );
-    if(ret)
-        return (int)ret;
-    ret = W( E_srv_S_srv );
-    if(ret)
-        return (int)ret;
+    r = Dh_W( srv, srv, 0 );
+    if(r)
+        return (int)r;
+    r = E_text_syntax_W( E_http2_push_Z_syntax_html );
+    if(r)
+        return (int)r;
+    r = W( E_http2_srv_S_accept );
+    if(r)
+        return (int)r;
+    r = W( E_http_srv_S_accept );
+    if(r)
+        return (int)r;
+    r = W( E_srv_S_srv );
+    if(r)
+        return (int)r;
     for_n( i, E_conf_S_bind_n )
     {   if( W( E_conf_S_bind[i].ip ))
             return 0;
         if( E_conf_S_bind[i].ssl )
-        {   ret = W( E_conf_S_bind[i].certificate_path );
-            if(ret)
-                return (int)ret;
-            ret = W( E_conf_S_bind[i].private_key_path );
-            if(ret)
-                return (int)ret;
+        {   r = W( E_conf_S_bind[i].certificate_path );
+            if(r)
+                return (int)r;
+            r = W( E_conf_S_bind[i].private_key_path );
+            if(r)
+                return (int)r;
         }
         for_n( j, E_conf_S_bind[i].virtualhost_n )
-        {   ret = W( E_conf_S_bind[i].virtualhost[j].root_path );
-            if(ret)
-                return (int)ret;
-            ret = W( E_conf_S_bind[i].virtualhost[j].host );
-            if(ret)
-                return (int)ret;
+        {   r = W( E_conf_S_bind[i].virtualhost[j].root_path );
+            if(r)
+                return (int)r;
+            r = W( E_conf_S_bind[i].virtualhost[j].host );
+            if(r)
+                return (int)r;
         }
     }
-    ret = W( E_conf_S_bind );
-    if(ret)
-        return (int)ret;
-    ret = X_W( main, loop );
-    if(ret)
-        return (int)ret;
-    ret = E_base_W();
-    return ret ? (int)ret : EXIT_SUCCESS;
+    r = W( E_conf_S_bind );
+    if(r)
+        return (int)r;
+    r = X_W( main, loop );
+    if(r)
+        return (int)r;
+    r = E_base_W();
+    return r ? (int)r : EXIT_SUCCESS;
 }
 //==============================================================================
 void
