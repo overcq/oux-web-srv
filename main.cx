@@ -7,7 +7,7 @@
 *         entry and raw labels
 * ©overcq                on ‟Gentoo Linux 17.1” “x86_64”             2020‒4‒10 S
 *******************************************************************************/
-#define S_as_user   "apache"
+#define S_as_user   "www-data"
 Pc E_main_S_conf_file[] =
 { "oux-web-srv.conf"
 , "/etc/oux-web-srv.conf"
