@@ -128,9 +128,9 @@ E_srv_M( void
         , .ai_protocol = 0
         };
         struct addrinfo *ai;
-        N l = E_text_Z_n_N_s_G( E_conf_S_bind[i].port, sizeof( E_conf_S_bind[i].port ), 10 );
+        N l = E_text_Z_n_N_s_G( E_conf_S_bind[i].port, 10 );
         C port[ l + 1 ];
-        E_text_Z_n_N_s( &port[0] + l, E_conf_S_bind[i].port, sizeof( E_conf_S_bind[i].port ), 10 );
+        E_text_Z_n_N_s( &port[0] + l, E_conf_S_bind[i].port, 10 );
         port[l] = '\0';
         V0( getaddrinfo( E_conf_S_bind[i].ip, &port[0], &ai_hints, &ai ))
         {   E_srv_W();
@@ -1152,7 +1152,7 @@ End:            ;
                         E_reply_I_code( E_http_srv_S_accept[i].ssl, E_http_srv_S_accept[i].listen_sock, 500, no, http_11 );
                         goto End_4;
                     }
-                    l = E_text_Z_n_N_s_G( stat.st_size, sizeof( stat.st_size ), 10 );
+                    l = E_text_Z_n_N_s_G( stat.st_size, 10 );
                     s = M(l);
                     if( !s )
                     {   N r = W(headers);
@@ -1163,7 +1163,7 @@ End:            ;
                         E_reply_I_code( E_http_srv_S_accept[i].ssl, E_http_srv_S_accept[i].listen_sock, 500, no, http_11 );
                         goto End_4;
                     }
-                    E_text_Z_n_N_s( s + l, stat.st_size, sizeof( stat.st_size ), 10 );
+                    E_text_Z_n_N_s( s + l, stat.st_size, 10 );
                     if( !E_srv_Q_reply_I_s_add_header( &headers, &headers_l, s, s + l ))
                     {   N r = W(s);
                         if(r)
@@ -1374,9 +1374,9 @@ End:            ;
                         l = E_http_srv_S_accept[i].file_size - E_http_srv_S_accept[i].l;
                 }
                 if( E_http_srv_S_accept[i].stream )
-                {   N l_1 = E_text_Z_n_N_s_G( l, sizeof(l), 16 ) + 2;
+                {   N l_1 = E_text_Z_n_N_s_G( l, 16 ) + 2;
                     C s[ l_1 ];
-                    E_text_Z_n_N_s( &s[ l_1 - 2 ], l, sizeof(l), 16 );
+                    E_text_Z_n_N_s( &s[ l_1 - 2 ], l, 16 );
                     s[ l_1 - 2 ] = '\r';
                     s[ l_1 - 1 ] = '\n';
                     if(( ssl_ret = E_net_cli_I_write_data( E_http_srv_S_accept[i].ssl, E_http_srv_S_accept[i].listen_sock, &s[0], l_1 )) != l_1 )
@@ -1590,7 +1590,7 @@ End_1:      if( E_http_srv_S_accept[i].ssl )
                         }
                     }
                     if( ~stream->push_tmp_file )
-                        if( E_mem_Q_file_P_insert_s( stream->push_tmp_file, data, data_l ))
+                        if( E_mem_Q_file_P_insert_sl( stream->push_tmp_file, data, data_l ))
                         {   E_mem_Q_file_W_nosave( stream->push_tmp_file );
                             V0( unlink( stream->push_tmp_filename )){}
                             stream->push_tmp_file = ~0;
@@ -2232,7 +2232,7 @@ End3:                           ;
                                     goto End2_2;
                                 }
                                 push_stream->file_size = stat.st_size;
-                                l = E_text_Z_n_N_s_G( stat.st_size, sizeof( stat.st_size ), 10 );
+                                l = E_text_Z_n_N_s_G( stat.st_size, 10 );
                                 s = M(l);
                                 if( !s )
                                 {   for_n( headers_i, headers_n )
@@ -2311,7 +2311,7 @@ End3:                           ;
                                     goaway_error = E_srv_Z_error_S_internal_error;
                                     goto End2_2;
                                 }
-                                E_text_Z_n_N_s( s + l, stat.st_size, sizeof( stat.st_size ), 10 );
+                                E_text_Z_n_N_s( s + l, stat.st_size, 10 );
                                 E_text_Z_s_P_copy_s_0( E_text_Z_s_P_copy_s0( headers[ headers_i ], "content-length: " ), s, s + l );
                                 N r = W(s);
                                 if(r)
@@ -3489,7 +3489,7 @@ Http2_srv:                      ;
                                                 }
                                                 stream->push_tmp_file = E_http2_push_Q_tmp_file_M( &stream->push_tmp_filename );
                                                 if( ~stream->push_tmp_file )
-                                                {   if( E_mem_Q_file_P_insert_s( stream->push_tmp_file, data, data_l ))
+                                                {   if( E_mem_Q_file_P_insert_sl( stream->push_tmp_file, data, data_l ))
                                                     {   E_mem_Q_file_W_nosave( stream->push_tmp_file );
                                                         V0( unlink( stream->push_tmp_filename )){}
                                                         stream->push_tmp_file = ~0;
@@ -4039,7 +4039,7 @@ End4:                                                   ;
                                                                 goto End2_2;
                                                             }
                                                             push_stream->file_size = stat.st_size;
-                                                            l = E_text_Z_n_N_s_G( stat.st_size, sizeof( stat.st_size ), 10 );
+                                                            l = E_text_Z_n_N_s_G( stat.st_size, 10 );
                                                             s = M(l);
                                                             if( !s )
                                                             {   for_n( headers_i, headers_n )
@@ -4108,7 +4108,7 @@ End4:                                                   ;
                                                                 goaway_error = E_srv_Z_error_S_internal_error;
                                                                 goto End2_2;
                                                             }
-                                                            E_text_Z_n_N_s( s + l, stat.st_size, sizeof( stat.st_size ), 10 );
+                                                            E_text_Z_n_N_s( s + l, stat.st_size, 10 );
                                                             E_text_Z_s_P_copy_s_0( E_text_Z_s_P_copy_s0( headers[ headers_i ], "content-length: " ), s, s + l );
                                                             N r = W(s);
                                                             if(r)
@@ -4388,7 +4388,7 @@ End4:                                                   ;
                                                 }
                                                 stream->push_tmp_file = E_http2_push_Q_tmp_file_M( &stream->push_tmp_filename );
                                                 if( ~stream->push_tmp_file )
-                                                {   if( E_mem_Q_file_P_insert_s( stream->push_tmp_file, data, data_l ))
+                                                {   if( E_mem_Q_file_P_insert_sl( stream->push_tmp_file, data, data_l ))
                                                     {   E_mem_Q_file_W_nosave( stream->push_tmp_file );
                                                         V0( unlink( stream->push_tmp_filename )){}
                                                         stream->push_tmp_file = ~0;
@@ -4649,7 +4649,7 @@ End4:                                                   ;
                                         goto End2_2;
                                     }
                                     stream->file_size = stat.st_size;
-                                    l = E_text_Z_n_N_s_G( stat.st_size, sizeof( stat.st_size ), 10 );
+                                    l = E_text_Z_n_N_s_G( stat.st_size, 10 );
                                     s = M(l);
                                     if( !s )
                                     {   for_n( headers_i, headers_n )
@@ -4684,7 +4684,7 @@ End4:                                                   ;
                                         goaway_error = E_srv_Z_error_S_internal_error;
                                         goto End2_2;
                                     }
-                                    E_text_Z_n_N_s( s + l, stat.st_size, sizeof( stat.st_size ), 10 );
+                                    E_text_Z_n_N_s( s + l, stat.st_size, 10 );
                                     E_text_Z_s_P_copy_s_0( E_text_Z_s_P_copy_s0( headers[ headers_i ], "content-length: " ), s, s + l );
                                     N r = W(s);
                                     if(r)

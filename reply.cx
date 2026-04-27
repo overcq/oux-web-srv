@@ -43,7 +43,7 @@ E_reply_I_code_( SSL *ssl
                 E_text_Z_s_P_copy_s0( s_1, "1 " );
             else
                 E_text_Z_s_P_copy_s0( s_1, "0 " );
-            E_text_Z_n_N_s( s + 9 + 3, E_reply_S_status_msg[i].code, sizeof( E_reply_S_status_msg[i].code ), 10 );
+            E_text_Z_n_N_s( s + 9 + 3, E_reply_S_status_msg[i].code, 10 );
             *( s + 9 + 3 ) = ' ';
             s_1 = E_text_Z_s_P_copy_s0( E_text_Z_s_P_copy_s0( s + 9 + 4, E_reply_S_status_msg[i].s ), "\r\n" );
             if( http_11 && close )
