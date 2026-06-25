@@ -290,9 +290,9 @@ N
 E_srv_Q_reply_I_add_header_1_s0( Pc *headers
 , N *headers_l
 , Pc s
-){  N l;
-    if( !( l = E_text_Z_s_I_append_s0( headers, s )))
+){  if( !E_text_Z_s_I_append_s0( headers, s ))
         return 0;
+    N l = E_text_Z_s0_R_l(s);
     *headers_l += l;
     return l;
 }
@@ -301,18 +301,18 @@ E_srv_Q_reply_I_s_add_header_1( Pc *headers
 , N *headers_l
 , Pc s
 , Pc s_end
-){  N l;
-    if( !( l = E_text_Z_s_I_append_s( headers, s, s_end )))
+){  if( !E_text_Z_s_I_append_s( headers, s, s_end ))
         return 0;
+    N l = s_end - s;
     *headers_l += l;
     return l;
 }
 N
 E_srv_Q_reply_I_add_header_2( Pc *headers
 , N *headers_l
-){  N l;
-    if( !( l = E_text_Z_s_I_append_s0( headers, "\r\n" )))
+){  if( !E_text_Z_s_I_append_s0( headers, "\r\n" ))
         return 0;
+    N l = J_s0_R_l( "\r\n" );
     *headers_l += l;
     return l;
 }
@@ -1016,6 +1016,8 @@ End:            ;
                         args[0].argc = 1;
                         args[0].argv = ( Pc[] ){ "php-cgi", 0 };
                         E_flow_I_fork_I_exec( 0, args, args_n );
+                        V0_( close( E_srv_S_subprocess_pipe[0] ));
+                        exit( EXIT_FAILURE );
                     }
                     E_flow_I_fork_I_end(pid);
                     E_http_srv_S_accept[i].child = pid;
@@ -3137,6 +3139,8 @@ Http2_srv:                      ;
                                         args[0].argc = 1;
                                         args[0].argv = ( Pc[] ){ "php-cgi", 0 };
                                         E_flow_I_fork_I_exec( 0, args, args_n );
+                                        V0_( close( E_srv_S_subprocess_pipe[0] ));
+                                        exit( EXIT_FAILURE );
                                     }
                                     E_flow_I_fork_I_end(pid);
                                     stream->child = pid;
@@ -4972,13 +4976,13 @@ End4:                                                   ;
                             {   goaway_error = E_srv_Z_error_S_protocol_error;
                                 goto End2_2;
                             }
-                            struct E_http2_srv_Z_stream *stream;
+                            struct E_http2_srv_Z_stream *stream = 0;
                             for_each( stream_id, E_http2_srv_S_accept[i].stream, E_mem_Q_tab )
                             {   stream = E_mem_Q_tab_R( E_http2_srv_S_accept[i].stream, stream_id );
                                 if( stream->stream_id == frame_stream )
                                     break;
                             }
-                            if( stream->stream_id != frame_stream )
+                            if( !~stream_id )
                             {   goaway_error = E_srv_Z_error_S_protocol_error;
                                 goto End2_2;
                             }
