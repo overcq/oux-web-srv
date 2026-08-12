@@ -694,7 +694,7 @@ End:            ;
                     }else if( E_text_Z_s_T_eq_case_s0( line_start, s_2, "Content-Length" ))
                     {   if(post)
                         {   Pc s;
-                            post_l = E_text_Z_s_Z_10_N_n( content_start, line_end, &s );
+                            post_l = E_text_Z_s_N_n( content_start, line_end, &s, 10 );
                             if( s != line_end )
                             {   E_reply_I_code( E_http_srv_S_accept[i].ssl, E_http_srv_S_accept[i].listen_sock, 400, yes, http_11 );
                                 goto End_1;
@@ -746,7 +746,7 @@ End:            ;
                     old_end = inheader.host.end;
                     inheader.host.end = new_end;
                     Pc s;
-                    port = E_text_Z_s_Z_10_N_n( new_end + 1, old_end, &s );
+                    port = E_text_Z_s_N_n( new_end + 1, old_end, &s, 10 );
                     if( s != old_end )
                     {   E_reply_I_code( E_http_srv_S_accept[i].ssl, E_http_srv_S_accept[i].listen_sock, 400, yes, http_11 );
                         goto End_1;
@@ -1669,7 +1669,7 @@ End3:                           ;
                             {   port_found = yes;
                                 *s = '\0';
                                 Pc s_;
-                                port = E_text_Z_s0_Z_10_N_n( s + 1, &s_ );
+                                port = E_text_Z_s0_N_n( s + 1, &s_, 10 );
                                 if( *s_ )
                                 {   for_n( k, E_http2_push_S_links_n )
                                     {   N r = W( E_http2_push_S_links[k] );
@@ -2815,7 +2815,7 @@ Http2_srv:                      ;
                                 {   port_found = yes;
                                     *s = '\0';
                                     Pc s_;
-                                    port = E_text_Z_s0_Z_10_N_n( s + 1, &s_ );
+                                    port = E_text_Z_s0_N_n( s + 1, &s_, 10 );
                                     if( *s_ )
                                     {   if( !~E_http2_srv_I_reply_code( i, stream->stream_id, 400 ))
                                         {   goaway_error = E_srv_Z_error_S_internal_error;
@@ -3558,7 +3558,7 @@ End4:                                                   ;
                                                         {   port_found = yes;
                                                             *s = '\0';
                                                             Pc s_;
-                                                            port = E_text_Z_s0_Z_10_N_n( s + 1, &s_ );
+                                                            port = E_text_Z_s0_N_n( s + 1, &s_, 10 );
                                                             if( *s_ )
                                                             {   for_n( k, E_http2_push_S_links_n )
                                                                 {   N r = W( E_http2_push_S_links[k] );
